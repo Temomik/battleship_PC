@@ -82,11 +82,11 @@
 ## 2.2 Интерфейс пользователя
 Окно входа в приложение.
 
-![Окно входа в приложение](../../Images/Mockups/menu.PNG) 
+![Окно входа в приложение](../../Images/Mockups/menu.png) 
 
 Окно расстановки кораблей.
 
-![Окно расстановки кораблей](../../Images/Mockups/arrangement.PNG ) 
+![Окно расстановки кораблей](../../Images/Mockups/arrangement.png ) 
 
 <a name="user_specifications"/>
 
