@@ -79,7 +79,7 @@
 
 Окно расстановки кораблей.
 
-![Окно расстановки кораблей](../../Images/Mockups/arrangement.png ) 
+![Окно расстановки кораблей](../../Images/Mockups/arrangement_.png ) 
 
 <a name="user_specifications"/>
 
