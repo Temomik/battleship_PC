@@ -79,8 +79,11 @@
 
 Окно расстановки кораблей.
 
-![Окно расстановки кораблей](../../Images/Mockups/arrangement_.png ) 
+![Окно расстановки кораблей](../../Images/Mockups/arrangement_.png ) change_type.png
 
+Окно выбора типа корабля.
+
+![Окно расстановки кораблей](../../Images/Mockups/change_type.png )
 <a name="user_specifications"/>
 
 ## 2.3 Характеристики пользователей
