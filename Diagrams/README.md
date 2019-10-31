@@ -84,22 +84,22 @@ Aктеры | Описание
 ### 2. Диаграмма активности<a name="2"></a>
 ##### 2.1 Регистрация<a name="2.1"></a> 
 Когда пользователь вводит корректные данные для регистрации, приложение создает новую учетную запись. Если данные неверные - пользователь информируется об ошибке.
-![Register activity](../Images/Diagrams/AD1.png)
+![Register activity](../Images/Diagrams/AD1.PNG)
 ##### 2.2 Проверка условия конца игры<a name="2.2"></a> 
 На каждом шагу игра проверяет наличие кораблей у всех игроков.
-![Game activity](../Images/Diagrams/AD2.png)
+![Game activity](../Images/Diagrams/AD2.PNG)
 ### 3. Диаграмма последовательности<a name="3"></a>
 Диаграмма последовательности приложения:
-![Sequence Diagram](../Images/Diagrams/SD.png)
+![Sequence Diagram](../Images/Diagrams/SD.PNG)
 ### 4. Диаграмма состояний<a name="4"></a>
 Диаграмма состояний описывает поведение ячейки игрового поля во время всего игрового процесса.
-![State Diagram](../Images/Diagrams/STD.png)
+![State Diagram](../Images/Diagrams/STD.PNG)
 ### 5. Диаграмма классов<a name="5"></a>
 Диаграмма классов показывает как разработана система и взаимодействие частей системы во время разработки.
-![Class Diagram](../Images/Diagrams/DC.png)
+![Class Diagram](../Images/Diagrams/DC.PNG)
 ### 6. Диаграмма компонентов<a name="6"></a>
 Диаграмма компонентов описывает как компоненты соединены и как данные перемещаются внутри приложения. Игра морской бой разработана по MVC архитектуре. 
 
-![Component Diagram](../Images/Diagrams/DCP.png)
+![Component Diagram](../Images/Diagrams/DCP.PNG)
 
 
