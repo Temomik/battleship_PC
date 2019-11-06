@@ -5,7 +5,9 @@ int main()
 {
     sf::RenderWindow window(sf::VideoMode(200, 200), "SFML works!", sf::Style::Fullscreen);
     View view("image/background.jpg");
+    view.allignButton(window);
 
+    window.setFramerateLimit(30);
     while (window.isOpen())
     {
         sf::Event event;

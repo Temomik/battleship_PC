@@ -6,7 +6,7 @@
         {
             "label": "build",
             "type": "shell",
-            "command": "mingw32-make all & move game.exe ./debug & move main.o ./debug & debug\\game.exe",
+            "command": "mingw32-make all & del /f debug\\game.exe & move game.exe ./debug & move main.o ./debug & debug\\game.exe",
             "group": {
                 "kind": "build",
                 "isDefault": true
