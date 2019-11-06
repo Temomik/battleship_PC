@@ -12,16 +12,13 @@ private:
 public:
     View(std::string backgroundName);
     ~View();
+    void addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text,size_t fontSize, std::string font);
     void draw(sf::RenderWindow& window);
     void allignButton(sf::RenderWindow& window);
 };
 
 View::View(std::string backgroundName)
 {
-    // buttons.push_back(Button(0,0,400,200,"image/button.jpg"));
-    // buttons.push_back(Button(0,0,400,200,"image/button.jpg"));
-    // buttons.push_back(Button(0,0,400,200,"image/button.jpg"));
-    // buttons.push_back(Button(0,0,400,100,"image/button.jpg"));
     texture.loadFromFile(backgroundName);
     sprite.setTexture(texture);
 }
@@ -58,3 +55,10 @@ void View::draw(sf::RenderWindow& window)
         it.draw(window);
     }
 }   
+
+void View::addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text,size_t fontSize, std::string font)
+{
+    Button button(x,y,width,height,fileName);
+    button.setText(text,fontSize,font);
+    buttons.push_back(button);
+}
