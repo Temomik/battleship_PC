@@ -14,6 +14,7 @@ public:
     ~View();
     void addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text,size_t fontSize, std::string font);
     void draw(sf::RenderWindow& window);
+    int getSelectedButton(sf::RenderWindow& window);
     void allignButton(sf::RenderWindow& window);
 };
 
@@ -55,6 +56,19 @@ void View::draw(sf::RenderWindow& window)
         it.draw(window);
     }
 }   
+
+int View::getSelectedButton(sf::RenderWindow& window)
+{
+    for(int i = 0; i < buttons.size(); i++)
+    {
+        if(buttons[i].isButtonSelect(window))
+        {
+            return i;
+        }
+    }
+    return - 1;
+}
+
 
 void View::addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text,size_t fontSize, std::string font)
 {
