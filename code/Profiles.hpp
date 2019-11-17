@@ -4,12 +4,12 @@
 #include <string>
 #include <fstream>
 
-#define MAX 50
+#define MAX_STRINGN 15
 
 struct Profile
 {
-    char login[MAX];
-    char password[MAX];
+    char login[MAX_STRINGN];
+    char password[MAX_STRINGN];
     int money;
     int record;
 };

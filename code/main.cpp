@@ -6,8 +6,6 @@
 #include <iostream>
 #include <conio.h>
 
-#define MAX 15
-
 int menuNum = 0;
 int menuStringSet = -1;
 int stringSetNum = -1;
@@ -46,7 +44,7 @@ void inputStream()
                         if (inputString.size() > 0)
                             inputString = inputString.substr(0, inputString.size() - 1);
                     }
-                    else if (inputString.size() < MAX && toAnsi(code) >= 0)
+                    else if (inputString.size() < MAX_STRINGN && toAnsi(code) >= 0)
                         inputString += toAnsi(code);
                 }
             }
@@ -56,6 +54,7 @@ void inputStream()
 
 int main()
 {
+    Profile newUser = {"","",0,0}, currentUser = {"","",0,0};
     std::stack<int> lastMenu;
     sf::Thread input(&inputStream);
     input.launch();
@@ -107,15 +106,23 @@ int main()
         switch (stringSetNum)
         {
         case 0:
+            for(int i = 0; i < MAX_STRINGN; i++)
+                currentUser.login[i] = inputString[i];
             loginMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 1:
+            for(int i = 0; i < MAX_STRINGN; i++)
+                currentUser.password[i] = inputString[i];
             loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 2:
+            for(int i = 0; i < MAX_STRINGN; i++)
+                newUser.login[i] = inputString[i];
             registerMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 3:
+            for(int i = 0; i < MAX_STRINGN; i++)
+                newUser.password[i] = inputString[i];
             registerMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 4:
@@ -187,9 +194,11 @@ int main()
                 switch (buttonCount)
                 {
                 case 0:
+                    inputString = newUser.login;
                     stringSetNum = 2;
                     break;
                 case 1:
+                    inputString = newUser.password;
                     stringSetNum = 3;
                     break;
                 case 2:
@@ -218,9 +227,11 @@ int main()
                 switch (buttonCount)
                 {
                 case 0:
+                    inputString = currentUser.login;
                     stringSetNum = 0;
                     break;
                 case 1:
+                    inputString = currentUser.password;
                     stringSetNum = 1;
                     break;
                 case 2:
