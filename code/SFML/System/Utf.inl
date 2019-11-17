@@ -190,7 +190,7 @@ Out Utf<8>::fromLatin1(In begin, In end, Out output)
         output = encode(*begin++, output);
 
     return output;
-}
+}   
 
 
 ////////////////////////////////////////////////////////////

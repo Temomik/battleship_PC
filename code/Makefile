@@ -4,14 +4,13 @@ OBJECTS = $(SOURCES:.cpp=.o)
 EXECUTABLE = game
 
 LIBS = -lsfml-graphics -lsfml-audio -lsfml-window -lsfml-system
-#CLOSE_CONSOLE = --subsystem,windows
 
 INSTALL_TOP = C:/SFML
 INSTALL_INC = -I $(INSTALL_TOP)/include
 INSTALL_LIB = -L $(INSTALL_TOP)/lib $(LIBS)
 
 CFLAGS = -w -g -DSFML_STATIC $(INSTALL_INC) $(INSTALL_LIB) 
-LDFLAGS = -w $(CFLAGS) $(CLOSE_CONSOLE)
+LDFLAGS = -w $(CFLAGS)
 
 all: $(SOURCES) $(EXECUTABLE)
 

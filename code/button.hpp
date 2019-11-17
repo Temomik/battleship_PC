@@ -1,3 +1,5 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
 #include <string>
 
@@ -15,6 +17,7 @@ public:
     void draw(sf::RenderWindow& window);
     void setPosition(int x, int y);
     void setText(std::string text,size_t size,std::string font);
+    void setText(std::string text);
     bool isButtonSelect(sf::RenderWindow& window);
     sf::IntRect getRect();
     ~Button();
@@ -29,6 +32,10 @@ Button::Button(size_t x, size_t y, size_t width, size_t height, std::string file
     sprite.setTextureRect(rect);
 }
 
+void Button::setText(std::string text)
+{
+    this->text.setString(text);    
+}
 
 
 void Button::draw(sf::RenderWindow& window) 
@@ -42,14 +49,15 @@ Button::Button(const Button& copy)
     this->texture = copy.texture;
     this->sprite.setTexture(copy.texture);
     rect = copy.rect;
-    this->sprite.setTextureRect(copy.rect);
+    this->sprite.setTextureRect(rect);
     this->sprite.setPosition(copy.sprite.getPosition().x,copy.sprite.getPosition().y);
     this->font = copy.font;
     this->text.setColor(copy.text.getColor());
     this->text.setFont(this->font);
-    this->text.setPosition(copy.text.getPosition().x+sprite.getPosition().x,copy.text.getPosition().y+sprite.getPosition().y);
     this->text.setString(copy.text.getString());
     this->text.setCharacterSize(copy.text.getCharacterSize());
+    setText(copy.text.getString(),text.getCharacterSize(),"");
+    // this->text.setPosition(copy.text.getPosition().x+sprite.getPosition().x,copy.text.getPosition().y+sprite.getPosition().y);
 }
 
 void Button::setPosition(int x, int y)
@@ -64,12 +72,15 @@ sf::IntRect Button::getRect()
 
 void Button::setText(std::string text,size_t size,std::string font)
 {
-    this->font.loadFromFile(font);
-    this->text.setFont(this->font);
-    this->text.setString(text);    
-    this->text.setCharacterSize(size);
-    
+    if(font != "")
+    {
+        this->font.loadFromFile(font);
+        this->text.setFont(this->font);
+        this->text.setString(text);
+        this->text.setCharacterSize(size);
+    }
     this->text.setPosition(sprite.getPosition().x + (rect.width/2 - (size*text.size()/2+size/2)/2),sprite.getPosition().y+rect.height/2-size/2);
+    // this->text.setPosition(sprite.getPosition().x ,sprite.getPosition().y);
 }
 
 bool Button::isButtonSelect(sf::RenderWindow& window)

@@ -1,3 +1,5 @@
+#pragma once 
+
 #include <SFML/Graphics.hpp>
 #include "button.hpp"
 #include <vector>
@@ -16,6 +18,7 @@ public:
     void draw(sf::RenderWindow& window);
     int getSelectedButton(sf::RenderWindow& window);
     void allignButton(sf::RenderWindow& window);
+    void setButtonText(size_t numb, std::string text,size_t size,std::string font);
 };
 
 View::View(std::string backgroundName)
@@ -56,6 +59,11 @@ void View::draw(sf::RenderWindow& window)
         it.draw(window);
     }
 }   
+
+void View::setButtonText(size_t numb, std::string text,size_t size,std::string font)
+{
+    buttons[numb].setText(text,size,font);
+}
 
 int View::getSelectedButton(sf::RenderWindow& window)
 {
