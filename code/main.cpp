@@ -6,11 +6,12 @@
 #include <iostream>
 #include <conio.h>
 
-int menuNum = 0;
-int menuStringSet = -1;
 int stringSetNum = -1;
+int menuStringSet = -1;
 std::string inputString = "";
 sf::Event event;
+
+enum menuNames {loginMenuEnum,registerMenuEnum,mainMenuEnum,infoMenuEnum,rulesMenuEnum,firstGameStageMenuEnum,secondGameStageMenuEnum,startMenuEnum};
 
 int toAnsi(int code)
 {
@@ -23,6 +24,13 @@ int toAnsi(int code)
             return ansi[i];
     }
     return -1;
+}
+
+std::string toString(int num)
+{
+    char buff[50];
+    itoa(num,buff,50);
+    return std::string(buff);
 }
 
 void setCharString(char* first,std::string second, int max)
@@ -66,7 +74,7 @@ void inputStream()
 
 int main()
 {
-    Profile newUser = {"","",0,0}, currentUser = {"","",0,0};
+    Profile currentUser = {"","",0,0};
     std::stack<int> lastMenu;
     sf::Thread input(&inputStream);
     input.launch();
@@ -81,12 +89,27 @@ int main()
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
     mainMenu.allignButton(window);
 
+    View rulesMenu("image/rules.jpg");
+
     View startMenu("image/background.jpg");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Register", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Login", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "unauthorized", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
     startMenu.allignButton(window);
+    
+    View firstGameStageMenu("image/background.jpg");
+    firstGameStageMenu.createGrid(20,20,40,10,10,"image/water.jpg");
+    // firstGameStageMenu.addButton(0, 0, 800, 800, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
+    firstGameStageMenu.allignButton(window);
+
+    View infoMenu("image/background.jpg");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.allignButton(window);
 
     View registerMenu("image/background.jpg");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
@@ -104,6 +127,7 @@ int main()
 
     window.setFramerateLimit(30);
     int mouseStatus = 0;
+    int menuNum = startMenuEnum;
     while (window.isOpen())
     {
         while (window.pollEvent(event))
@@ -114,7 +138,7 @@ int main()
                 if (event.mouseButton.button == sf::Mouse::Left)
                     mouseStatus = 1;
         }
-
+        
         switch (stringSetNum)
         {
         case 0:
@@ -126,11 +150,11 @@ int main()
             loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 2:
-            setCharString( newUser.login,inputString,MAX_STRINGN);
+            setCharString( currentUser.login,inputString,MAX_STRINGN);
             registerMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 3:
-            setCharString( newUser.password,inputString,MAX_STRINGN);
+            setCharString( currentUser.password,inputString,MAX_STRINGN);
             registerMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 4:
@@ -139,7 +163,7 @@ int main()
             break;
         }
 
-        if (menuNum == 3)
+        if (menuNum == mainMenuEnum)
         {
             int buttonCount = mainMenu.getSelectedButton(window);
             if (mouseStatus == 1)
@@ -148,13 +172,17 @@ int main()
                 switch (buttonCount)
                 {
                 case 0:
-                    // window.close();
+                    menuNum = firstGameStageMenuEnum;
                     break;
                 case 1:
-                    // window.close();
+                    menuNum = rulesMenuEnum;
                     break;
                 case 2:
-                    // window.close();
+                    infoMenu.setButtonText(0, currentUser.login, 50, "font/consolaz.ttf");
+                    infoMenu.setButtonText(1, currentUser.password, 50, "font/consolaz.ttf");
+                    infoMenu.setButtonText(2, toString(currentUser.money), 50, "font/consolaz.ttf");
+                    infoMenu.setButtonText(3, toString(currentUser.record), 50, "font/consolaz.ttf");
+                    menuNum = infoMenuEnum;
                     break;
                 case 3:
                     window.close();
@@ -164,10 +192,9 @@ int main()
                 }
             }
         }
-        else if (menuNum == 0)
+        else if (menuNum == startMenuEnum)
         {
             int buttonCount = startMenu.getSelectedButton(window);
-
             if (mouseStatus == 1)
             {
                 mouseStatus = 0;
@@ -175,13 +202,13 @@ int main()
                 switch (buttonCount)
                 {
                 case 0:
-                    menuNum = 1;
+                    menuNum = registerMenuEnum;
                     break;
                 case 1:
-                    menuNum = 2;
+                    menuNum = loginMenuEnum;
                     break;
                 case 2:
-                    menuNum = 3;
+                    menuNum = mainMenuEnum;
                     break;
                 case 3:
                     window.close();
@@ -192,7 +219,7 @@ int main()
                 }
             }
         }
-        else if (menuNum == 1)
+        else if (menuNum == registerMenuEnum)
         {
             int buttonCount = registerMenu.getSelectedButton(window);
 
@@ -202,23 +229,23 @@ int main()
                 switch (buttonCount)
                 {
                 case 0:
-                    inputString = newUser.login;
+                    inputString = currentUser.login;
                     stringSetNum = 2;
                     break;
                 case 1:
-                    inputString = newUser.password;
+                    inputString = currentUser.password;
                     stringSetNum = 3;
                     break;
                 case 2:
                     stringSetNum = -1;
-                    if(strlen(newUser.login) > 0 && strlen(newUser.password) > 0 && !profiles.isConsist(newUser))
+                    if(strlen(currentUser.login) > 0 && strlen(currentUser.password) > 0 && !profiles.isConsistLogin(currentUser))
                     {
-                        profiles.addProfile(newUser);
-                        menuNum = 3;
+                        profiles.addProfile(currentUser);
+                        menuNum = mainMenuEnum;
                     }else
                     {
-                        setCharString(newUser.login,"",MAX_STRINGN);
-                        setCharString(newUser.password,"",MAX_STRINGN);
+                        setCharString(currentUser.login,"",MAX_STRINGN);
+                        setCharString(currentUser.password,"",MAX_STRINGN);
                         registerMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
                         registerMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
                     }
@@ -237,7 +264,7 @@ int main()
                 }
             }
         }
-        else if (menuNum == 2)
+        else if (menuNum == loginMenuEnum)
         {
             int buttonCount = loginMenu.getSelectedButton(window);
             if (mouseStatus == 1)
@@ -248,16 +275,16 @@ int main()
                 case 0:
                     inputString = currentUser.login;
                     stringSetNum = 0;
-                    break;
+                break;
                 case 1:
                     inputString = currentUser.password;
                     stringSetNum = 1;
                     break;
                 case 2:
                     stringSetNum = -1;
-                    if(profiles.isConsist(currentUser))
+                    if(profiles.isConsistProfile(currentUser))
                     {
-                        menuNum = 3;    
+                        menuNum = mainMenuEnum;    
                     } else
                     {
                         setCharString(currentUser.login,"",MAX_STRINGN);
@@ -269,7 +296,7 @@ int main()
                 case 3:
                     if (!lastMenu.empty())
                     {
-                        menuNum = 1;
+                        menuNum = startMenuEnum;
                         menuNum = lastMenu.top();
                         lastMenu.pop();
                     }
@@ -279,20 +306,40 @@ int main()
                     break;
                 }
             }
+        } else if(menuNum == rulesMenuEnum)
+        {
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+        } else if(menuNum == infoMenuEnum)
+        {
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+        }else if(menuNum == firstGameStageMenuEnum)
+        {
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
         }
         window.clear();
-        if (menuNum == 3)
+        if (menuNum == mainMenuEnum)
             mainMenu.draw(window);
-        if (menuNum == 0)
+        if (menuNum == startMenuEnum)
             startMenu.draw(window);
-        if (menuNum == 1)
+        if (menuNum == registerMenuEnum)
             registerMenu.draw(window);
-        if (menuNum == 2)
+        if (menuNum == loginMenuEnum)
             loginMenu.draw(window);
+        if (menuNum == rulesMenuEnum)
+            rulesMenu.draw(window);
+        if (menuNum == infoMenuEnum)
+            infoMenu.draw(window);
+        if (menuNum == firstGameStageMenuEnum)
+            firstGameStageMenu.draw(window);
         window.display();
     }
+
     input.terminate();
     input.wait();
+    
     profiles.write("saves");
     return 0;
 }

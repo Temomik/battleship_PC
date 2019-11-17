@@ -24,7 +24,8 @@ public:
     Profiles(std::string filename);
     bool write(std::string filename);
     void addProfile(Profile& profile);
-    bool isConsist(Profile& profile);
+    bool isConsistLogin(Profile& profile);
+    bool isConsistProfile(Profile& profile);
     ~Profiles();
 };
 
@@ -48,7 +49,17 @@ void Profiles::addProfile(Profile& profile)
     profiles.push_back(profile);
 }
 
-bool Profiles::isConsist(Profile& profile)
+bool Profiles::isConsistLogin(Profile& profile)
+{
+    for(auto it : profiles)
+    {
+        if(strcmp(it.login,profile.login) == 0)
+            return true;
+    }
+    return false;
+}
+
+bool Profiles::isConsistProfile(Profile& profile)
 {
     for(auto it : profiles)
     {

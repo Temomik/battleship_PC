@@ -3,18 +3,20 @@
 #include <SFML/Graphics.hpp>
 #include "button.hpp"
 #include <vector>
+#include "grid.hpp"
 
 class View
 {
+private:
     sf::Texture texture;
     sf::Sprite sprite;
     std::vector<Button> buttons;
-private:
-
+    Grid grid;
 public:
     View(std::string backgroundName);
     ~View();
     void addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text,size_t fontSize, std::string font);
+    void createGrid(int x,int y,int size,int width,int height,std::string filename);
     void draw(sf::RenderWindow& window);
     int getSelectedButton(sf::RenderWindow& window);
     void allignButton(sf::RenderWindow& window);
@@ -25,6 +27,11 @@ View::View(std::string backgroundName)
 {
     texture.loadFromFile(backgroundName);
     sprite.setTexture(texture);
+}
+
+void View::createGrid(int x,int y,int size,int width,int height,std::string filename)
+{
+    grid.create(x,y,size,width,height,filename);
 }
 
 void View::allignButton(sf::RenderWindow& window)
@@ -43,7 +50,6 @@ void View::allignButton(sf::RenderWindow& window)
         verticalAllign += verticalShift;
         buttons[i].setPosition(windowWidth - buttons[i].getRect().width/2,verticalAllign);
         verticalAllign += buttons[i].getRect().height;
-
     }
 }
 
@@ -58,6 +64,7 @@ void View::draw(sf::RenderWindow& window)
     {
         it.draw(window);
     }
+    grid.draw(window);
 }   
 
 void View::setButtonText(size_t numb, std::string text,size_t size,std::string font)
