@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <fstream>
+#include <cstring>
 
 #define MAX_STRINGN 15
 
@@ -22,6 +23,8 @@ private:
 public:
     Profiles(std::string filename);
     bool write(std::string filename);
+    void addProfile(Profile& profile);
+    bool isConsist(Profile& profile);
     ~Profiles();
 };
 
@@ -32,12 +35,27 @@ Profiles::Profiles(std::string filename)
     file.open(filename);
     if(!file)
         return;
-    while(!file.eof())
-        {
+    do
+    {
             file.read((char*)&profile,sizeof(Profile));
             profiles.push_back(profile);
-        }    
+    }while(!file.eof());
+    profiles.pop_back();    
     file.close();
+}
+void Profiles::addProfile(Profile& profile)
+{
+    profiles.push_back(profile);
+}
+
+bool Profiles::isConsist(Profile& profile)
+{
+    for(auto it : profiles)
+    {
+        if(strcmp(it.login,profile.login) == 0 && strcmp(it.password,profile.password) == 0)
+            return true;
+    }
+    return false;
 }
 
 bool Profiles::write(std::string filename)
@@ -47,10 +65,12 @@ bool Profiles::write(std::string filename)
     file.open(filename);
     if(!file)
         return false;
-    for(auto it : profiles)
-        {
-            file.write((char*)&it,sizeof(Profile));
-        } 
+    file.seekp(0, std::ios::beg);  
+    if(profiles.size() > 0)
+        for(auto it : profiles)
+            {
+                file.write((char*)&it,sizeof(Profile));
+            } 
     file.close();
 }
 

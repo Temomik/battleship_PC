@@ -67,14 +67,15 @@ void View::setButtonText(size_t numb, std::string text,size_t size,std::string f
 
 int View::getSelectedButton(sf::RenderWindow& window)
 {
+    int buttonNum = -1;
     for(int i = 0; i < buttons.size(); i++)
     {
         if(buttons[i].isButtonSelect(window))
         {
-            return i;
+            buttonNum = i;
         }
     }
-    return - 1;
+    return buttonNum;
 }
 
 

@@ -25,6 +25,18 @@ int toAnsi(int code)
     return -1;
 }
 
+void setCharString(char* first,std::string second, int max)
+{
+    if(max > second.size())
+    {
+        for(int i = 0; i < second.size(); i++)
+        {
+            first[i] = second[i];
+        }
+        first[second.size()] = NULL;
+    }
+}
+
 void inputStream()
 {
     while (1)
@@ -106,23 +118,19 @@ int main()
         switch (stringSetNum)
         {
         case 0:
-            for(int i = 0; i < MAX_STRINGN; i++)
-                currentUser.login[i] = inputString[i];
+            setCharString( currentUser.login,inputString,MAX_STRINGN);
             loginMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 1:
-            for(int i = 0; i < MAX_STRINGN; i++)
-                currentUser.password[i] = inputString[i];
+            setCharString( currentUser.password,inputString,MAX_STRINGN);
             loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 2:
-            for(int i = 0; i < MAX_STRINGN; i++)
-                newUser.login[i] = inputString[i];
+            setCharString( newUser.login,inputString,MAX_STRINGN);
             registerMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 3:
-            for(int i = 0; i < MAX_STRINGN; i++)
-                newUser.password[i] = inputString[i];
+            setCharString( newUser.password,inputString,MAX_STRINGN);
             registerMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 4:
@@ -202,7 +210,18 @@ int main()
                     stringSetNum = 3;
                     break;
                 case 2:
-                    // menuNum = 2;
+                    stringSetNum = -1;
+                    if(strlen(newUser.login) > 0 && strlen(newUser.password) > 0 && !profiles.isConsist(newUser))
+                    {
+                        profiles.addProfile(newUser);
+                        menuNum = 3;
+                    }else
+                    {
+                        setCharString(newUser.login,"",MAX_STRINGN);
+                        setCharString(newUser.password,"",MAX_STRINGN);
+                        registerMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
+                        registerMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
+                    }
                     break;
                 case 3:
                     if (!lastMenu.empty())
@@ -235,7 +254,17 @@ int main()
                     stringSetNum = 1;
                     break;
                 case 2:
-                    // menuNum = 2;
+                    stringSetNum = -1;
+                    if(profiles.isConsist(currentUser))
+                    {
+                        menuNum = 3;    
+                    } else
+                    {
+                        setCharString(currentUser.login,"",MAX_STRINGN);
+                        setCharString(currentUser.password,"",MAX_STRINGN);
+                        loginMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
+                        loginMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
+                    }
                     break;
                 case 3:
                     if (!lastMenu.empty())
@@ -264,5 +293,6 @@ int main()
     }
     input.terminate();
     input.wait();
+    profiles.write("saves");
     return 0;
 }
