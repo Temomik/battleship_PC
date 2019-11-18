@@ -17,6 +17,7 @@ public:
     void markSelectedCell(sf::RenderWindow& window,std::string texture);
     void markCell(sf::RenderWindow& window,int num,std::string texture);
     void markUnselectedCell(sf::RenderWindow& window,std::string texture);
+    std::vector<int>& getData();
     void setData(int num,int data);
     ~Grid();
 };
@@ -32,6 +33,11 @@ Grid::Grid(int x,int y,int size,int width,int height, std::string filename)
     //     }
     //     y += size;
     // }
+}
+
+std::vector<int>& Grid::getData()
+{
+    return data;
 }
 
 int Grid::getSelectedCell(sf::RenderWindow& window)
@@ -70,10 +76,7 @@ void Grid::markUnselectedCell(sf::RenderWindow& window,std::string texture)
 
 void Grid::setData(int num,int data)
 {
-    if(this->data.size() < num)
-    {
         this->data[num] = data;
-    }   
 }
 
 void Grid::create(int x,int y,int size,int width,int height,std::string filename)

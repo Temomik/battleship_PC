@@ -11,17 +11,19 @@ private:
     sf::Texture texture;
     sf::Sprite sprite;
     std::vector<Button> buttons;
-    Grid grid;
+    Grid grid,enemyGrid;
 public:
     View(std::string backgroundName);
     ~View();
     void addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text,size_t fontSize, std::string font);
     void createGrid(int x,int y,int size,int width,int height,std::string filename);
+    void createEnemyGrid(int x,int y,int size,int width,int height,std::string filename);
     void draw(sf::RenderWindow& window);
     int getSelectedButton(sf::RenderWindow& window);
     void allignButton(sf::RenderWindow& window,int shift);
     void markSelectedCell(sf::RenderWindow& window, std::string texture);
     void markCell(sf::RenderWindow& window,int num, std::string texture);
+    std::vector<int>& getGridData();
     int getSelectedCell(sf::RenderWindow& window);
     void setGridData(int num,int data);
     void setButtonText(size_t numb, std::string text,size_t size,std::string font);
@@ -31,6 +33,11 @@ View::View(std::string backgroundName)
 {
     texture.loadFromFile(backgroundName);
     sprite.setTexture(texture);
+}
+
+std::vector<int>& View::getGridData()
+{
+    return grid.getData();
 }
 
 void View::setGridData(int num,int data)
@@ -57,7 +64,10 @@ void View::createGrid(int x,int y,int size,int width,int height,std::string file
 {
     grid.create(x,y,size,width,height,filename);
 }
-
+void View::createEnemyGrid(int x,int y,int size,int width,int height,std::string filename)
+{
+    enemyGrid.create(x,y,size,width,height,filename);
+}
 void View::allignButton(sf::RenderWindow& window,int shift)
 {
     int maxHeightFill = 0;
@@ -89,6 +99,7 @@ void View::draw(sf::RenderWindow& window)
         it.draw(window);
     }
     grid.draw(window);
+    enemyGrid.draw(window);
 }   
 
 void View::setButtonText(size_t numb, std::string text,size_t size,std::string font)

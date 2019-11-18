@@ -5,13 +5,30 @@
 #include "Profiles.hpp"
 #include <iostream>
 #include <conio.h>
-
+#include <ctime>
 int stringSetNum = -1;
 int menuStringSet = -1;
 std::string inputString = "";
 sf::Event event;
+const int gridCount = 10;
+const int shipCount = 10;
+int ships[] = {1, 1, 1, 1, 2, 2, 2, 3, 3, 4};
+const int RadarPrice = 200,artilleryPrice = 300;
+int bonus[2] ={0,0};
 
-enum menuNames {loginMenuEnum,registerMenuEnum,mainMenuEnum,infoMenuEnum,rulesMenuEnum,firstGameStageMenuEnum,secondGameStageMenuEnum,shipSelectMenuEnum,startMenuEnum};
+enum menuNames
+{
+    loginMenuEnum,
+    registerMenuEnum,
+    mainMenuEnum,
+    infoMenuEnum,
+    rulesMenuEnum,
+    firstGameStageMenuEnum,
+    secondGameStageMenuEnum,
+    shipSelectMenuEnum,
+    startMenuEnum,
+    bonusMenuEnum
+};
 
 int toAnsi(int code)
 {
@@ -23,148 +40,117 @@ int toAnsi(int code)
         if (utf32[i] == code)
             return ansi[i];
     }
+
     return -1;
 }
 
 std::string toString(int num)
 {
     char buff[50];
-    itoa(num,buff,50);
+    itoa(num, buff, 50);
     return std::string(buff);
 }
 
-void setCharString(char* first,std::string second, int max)
+bool canPlaceShip(int deck, int cord, int gridCount, int rotate, std::vector<int> &grid)
 {
-    if(max > second.size())
+    int k = 0;
+    std::vector<std::vector<int>> gridArray;
+    std::vector<int> tmp;
+    for (size_t i = 0; i < gridCount; i++)
     {
-        for(int i = 0; i < second.size(); i++)
+        gridArray.push_back(tmp);
+        for (size_t j = 0; j < gridCount; j++)
+        {
+            gridArray[i].push_back(0);
+            gridArray[i][j] = grid[k];
+            k++;
+        }
+    }
+    int x = cord % 10, y = cord / 10;
+    int maxX, maxY;
+    if (rotate == 0)
+    {
+        if (x + deck > gridCount)
+            return false;
+        maxX = x + deck;
+        maxY = y + 1;
+    }
+    else
+    {
+        if (y + deck > gridCount)
+            return false;
+        maxX = x + 1;
+        maxY = y + deck;
+    }
+
+    for (int i = y - 1; i <= maxY; i++)
+    {
+        for (int j = x - 1; j <= maxX; j++)
+        {
+            if (i >= 0 && j >= 0 && i < gridCount && j < gridCount)
+            {
+                if (gridArray[i][j] == 1)
+                    return false;
+            }
+        }
+    }
+    return true;
+}
+
+void setCharString(char *first, std::string second, int max)
+{
+    if (max > second.size())
+    {
+        for (int i = 0; i < second.size(); i++)
         {
             first[i] = second[i];
         }
         first[second.size()] = NULL;
     }
 }
+View rulesMenu("image/rules.jpg");
+View registerMenu("image/background.jpg");
+View loginMenu("image/background.jpg");
+View infoMenu("image/background.jpg");
+View shipSelectMenu("image/background.jpg");
+View firstGameStageMenu("image/background.jpg");
+View secondGameStageMenu("image/background.jpg");
+View startMenu("image/background.jpg");
+View mainMenu("image/background.jpg");
+View bonusMenu("image/background.jpg");
+sf::RenderWindow window(sf::VideoMode(1920, 1080), "BattleShip", sf::Style::Fullscreen);
+int rightMouseStatus = 0;
+int leftMouseStatus = 0;
+int middleMouseStatus = 0;
+int menuNum = startMenuEnum;
+Profiles profiles("saves");
 
-void inputStream()
+void logicThread()
 {
+    int lastCell = -1;
+    int ccurrentShipDeck = 0;
+    int rotate = 0;
+    Profile currentUser = {"", "", 0, 0};
+    std::stack<int> lastMenu;
     while (1)
     {
-        while (stringSetNum >= 0)
-        {
-            if (event.type == sf::Event::KeyPressed)
-            {
-                // char buffer[50];
-                // itoa(event.text.unicode,buffer,10);
-                // inputString = buffer + ' ';
-                int code = event.text.unicode;
-                if (code < 255)
-                {
-                    if (code == 59)
-                    {
-                        if (inputString.size() > 0)
-                            inputString = inputString.substr(0, inputString.size() - 1);
-                    }
-                    else if (inputString.size() < MAX_STRINGN && toAnsi(code) >= 0)
-                        inputString += toAnsi(code);
-                }
-            }
-        }
-    }
-}
 
-int main()
-{
-    Profile currentUser = {"","",0,0};
-    std::stack<int> lastMenu;
-    sf::Thread input(&inputStream);
-    input.launch();
-
-    Profiles profiles("saves");
-    sf::RenderWindow window(sf::VideoMode(1920, 1080), "BattleShip", sf::Style::Fullscreen);
-
-    View mainMenu("image/background.jpg");
-    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Start Game", 50, "font/consolaz.ttf");
-    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Rules", 50, "font/consolaz.ttf");
-    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "info", 50, "font/consolaz.ttf");
-    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
-    mainMenu.allignButton(window,0);
-
-    View rulesMenu("image/rules.jpg");
-
-    View startMenu("image/background.jpg");
-    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Register", 50, "font/consolaz.ttf");
-    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Login", 50, "font/consolaz.ttf");
-    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "unauthorized", 50, "font/consolaz.ttf");
-    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
-    startMenu.allignButton(window,0);
-    
-    View firstGameStageMenu("image/background.jpg");
-    firstGameStageMenu.createGrid(20,20,90,10,10,"image/water.jpg");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "ships", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "start", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "bonus", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
-    firstGameStageMenu.allignButton(window,400);
-    
-    View shipSelectMenu("image/background.jpg");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "one deck", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "two deck", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "three deck", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "four deck", 50, "font/consolaz.ttf");
-    firstGameStageMenu.allignButton(window,400);
-
-    View infoMenu("image/background.jpg");
-    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    infoMenu.allignButton(window,0);
-
-    View registerMenu("image/background.jpg");
-    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "register", 50, "font/consolaz.ttf");
-    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
-    registerMenu.allignButton(window,0);
-
-    View loginMenu("image/background.jpg");
-    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "login", 50, "font/consolaz.ttf");
-    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
-    loginMenu.allignButton(window,0);
-
-    window.setFramerateLimit(30);
-    int mouseStatus = 0;
-    int menuNum = startMenuEnum;
-    int lastCell = -1;
-    while (window.isOpen())
-    {
-        while (window.pollEvent(event))
-        {
-            if (event.type == sf::Event::Closed)
-                window.close();
-            if (event.type == sf::Event::MouseButtonReleased)
-                if (event.mouseButton.button == sf::Mouse::Left)
-                    mouseStatus = 1;
-        }
-        
         switch (stringSetNum)
         {
         case 0:
-            setCharString( currentUser.login,inputString,MAX_STRINGN);
+            setCharString(currentUser.login, inputString, MAX_STRINGN);
             loginMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 1:
-            setCharString( currentUser.password,inputString,MAX_STRINGN);
+            setCharString(currentUser.password, inputString, MAX_STRINGN);
             loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 2:
-            setCharString( currentUser.login,inputString,MAX_STRINGN);
+            setCharString(currentUser.login, inputString, MAX_STRINGN);
             registerMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
             break;
         case 3:
-            setCharString( currentUser.password,inputString,MAX_STRINGN);
+            setCharString(currentUser.password, inputString, MAX_STRINGN);
             registerMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
             break;
         case 4:
@@ -176,9 +162,9 @@ int main()
         if (menuNum == mainMenuEnum)
         {
             int buttonCount = mainMenu.getSelectedButton(window);
-            if (mouseStatus == 1)
+            if (rightMouseStatus == 1)
             {
-                mouseStatus = 0;
+                rightMouseStatus = 0;
                 switch (buttonCount)
                 {
                 case 0:
@@ -205,9 +191,9 @@ int main()
         else if (menuNum == startMenuEnum)
         {
             int buttonCount = startMenu.getSelectedButton(window);
-            if (mouseStatus == 1)
+            if (rightMouseStatus == 1)
             {
-                mouseStatus = 0;
+                rightMouseStatus = 0;
                 lastMenu.push(menuNum);
                 switch (buttonCount)
                 {
@@ -233,9 +219,9 @@ int main()
         {
             int buttonCount = registerMenu.getSelectedButton(window);
 
-            if (mouseStatus == 1)
+            if (rightMouseStatus == 1)
             {
-                mouseStatus = 0;
+                rightMouseStatus = 0;
                 switch (buttonCount)
                 {
                 case 0:
@@ -248,14 +234,15 @@ int main()
                     break;
                 case 2:
                     stringSetNum = -1;
-                    if(strlen(currentUser.login) > 0 && strlen(currentUser.password) > 0 && !profiles.isConsistLogin(currentUser))
+                    if (strlen(currentUser.login) > 0 && strlen(currentUser.password) > 0 && !profiles.isConsistLogin(currentUser))
                     {
                         profiles.addProfile(currentUser);
                         menuNum = mainMenuEnum;
-                    }else
+                    }
+                    else
                     {
-                        setCharString(currentUser.login,"",MAX_STRINGN);
-                        setCharString(currentUser.password,"",MAX_STRINGN);
+                        setCharString(currentUser.login, "", MAX_STRINGN);
+                        setCharString(currentUser.password, "", MAX_STRINGN);
                         registerMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
                         registerMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
                     }
@@ -277,28 +264,29 @@ int main()
         else if (menuNum == loginMenuEnum)
         {
             int buttonCount = loginMenu.getSelectedButton(window);
-            if (mouseStatus == 1)
+            if (rightMouseStatus == 1)
             {
-                mouseStatus = 0;
+                rightMouseStatus = 0;
                 switch (buttonCount)
                 {
                 case 0:
                     inputString = currentUser.login;
                     stringSetNum = 0;
-                break;
+                    break;
                 case 1:
                     inputString = currentUser.password;
                     stringSetNum = 1;
                     break;
                 case 2:
                     stringSetNum = -1;
-                    if(profiles.isConsistProfile(currentUser))
+                    if (profiles.isConsistProfile(currentUser))
                     {
-                        menuNum = mainMenuEnum;    
-                    } else
+                        menuNum = mainMenuEnum;
+                    }
+                    else
                     {
-                        setCharString(currentUser.login,"",MAX_STRINGN);
-                        setCharString(currentUser.password,"",MAX_STRINGN);
+                        setCharString(currentUser.login, "", MAX_STRINGN);
+                        setCharString(currentUser.password, "", MAX_STRINGN);
                         loginMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
                         loginMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
                     }
@@ -316,53 +304,269 @@ int main()
                     break;
                 }
             }
-        } else if(menuNum == rulesMenuEnum)
+        }
+        else if (menuNum == rulesMenuEnum)
         {
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                menuNum = mainMenuEnum;
-        } else if(menuNum == infoMenuEnum)
-        {
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                menuNum = mainMenuEnum;
-        }else if(menuNum == firstGameStageMenuEnum)
-        {
-            int buttonCount = registerMenu.getSelectedButton(window);
-            switch (buttonCount)
-            {
-            case 0:
-                menuNum = shipSelectMenuEnum;
-                break;
-            case 1:
-                break;
-            case 2:
-                break;
-            case 3:
-                break;
-            default:
-                break;
-            }
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                menuNum = mainMenuEnum;
-            if(mouseStatus == 1)
-            {
-                mouseStatus = 0;
-                int tmp = firstGameStageMenu.getSelectedCell(window);
-                firstGameStageMenu.markCell(window,tmp,"image/water_.jpg");
-            }
-            // if(tmp != lastCell)
-            // {
-            //     if(lastCell >= 0)
-            //     {
-            //         firstGameStageMenu.markCell(window,lastCell,"image/water.jpg");
-            //     }
-            //     lastCell = tmp;
-            // }
-            // firstGameStageMenu.markSelectedCell(window,"image/water_.jpg");
-        }else if(menuNum == shipSelectMenuEnum)
-        {
-            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
                 menuNum = mainMenuEnum;
         }
+        else if (menuNum == infoMenuEnum)
+        {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+        }
+        else if (menuNum == firstGameStageMenuEnum)
+        {
+            int buttonCount = firstGameStageMenu.getSelectedButton(window);
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+            if (rightMouseStatus == 1)
+            {
+                rightMouseStatus = 0;
+                switch (buttonCount)
+                {
+                case 0:
+                    menuNum = shipSelectMenuEnum;
+                    break;
+                case 1:
+                    rotate ^= 1;
+                    break;
+                case 2:
+                    menuNum = bonusMenuEnum;
+                    break;
+                case 3: 
+                    // ships = int[shipCount]{1, 1, 1, 1, 2, 2, 2, 3, 3, 4};
+                    for (size_t i = 0; i < gridCount * gridCount; i++)
+                    {
+                        firstGameStageMenu.setGridData(i, 0);
+                        firstGameStageMenu.markCell(window, i, "image/water.jpg");
+                    }
+                    for (int i = 0; i < shipCount; i++)
+                    {
+                        int cord, rotate;
+                        while (1)
+                        {
+                            cord = rand() % 100;
+                            rotate = rand() % 2 - 1;
+                            if (canPlaceShip(ships[i], cord, gridCount, rotate, firstGameStageMenu.getGridData()))
+                                break;
+                        }
+                        for (int j = 0; j < ships[i]; j++)
+                            if (rotate == 0)
+                            {
+                                firstGameStageMenu.markCell(window, cord + j, "image/water_.jpg");
+                                firstGameStageMenu.setGridData(cord + j, 1);
+                            }
+                            else
+                            {
+                                firstGameStageMenu.markCell(window, cord + j * gridCount, "image/water_.jpg");
+                                firstGameStageMenu.setGridData(cord + j * gridCount, 1);
+                            }
+                    }
+                    break;
+                case 4:
+                    menuNum = secondGameStageMenuEnum;
+                    break;
+                case 5:
+                    menuNum = mainMenuEnum;
+                    for (size_t i = 0; i < gridCount * gridCount; i++)
+                    {
+                        firstGameStageMenu.setGridData(i, 0);
+                        firstGameStageMenu.markCell(window, i, "image/water.jpg");
+                    }
+                    break;
+                default:
+                    break;
+                }
+                int tmp = firstGameStageMenu.getSelectedCell(window);
+                if (tmp >= 0 && canPlaceShip(ccurrentShipDeck, tmp, gridCount, rotate, firstGameStageMenu.getGridData()))
+                {
+                    bool isShipAmount = false;
+                    for (int i = 0; i < shipCount; i++)
+                    {
+                        if (ships[i] == ccurrentShipDeck)
+                        {
+                            ships[i] = -1;
+                            isShipAmount = true;
+                            break;
+                        }
+                    }
+                    if (isShipAmount)
+                        for (int i = 0; i < ccurrentShipDeck; i++)
+                        {
+                            if (rotate == 0)
+                            {
+                                firstGameStageMenu.markCell(window, tmp + i, "image/water_.jpg");
+                                firstGameStageMenu.setGridData(tmp + i, 1);
+                            }
+                            else
+                            {
+                                firstGameStageMenu.markCell(window, tmp + i * gridCount, "image/water_.jpg");
+                                firstGameStageMenu.setGridData(tmp + i * gridCount, 1);
+                            }
+                        }
+                }
+            }
+        }
+        else if (menuNum == shipSelectMenuEnum)
+        {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = firstGameStageMenuEnum;
+            int buttonCount = shipSelectMenu.getSelectedButton(window);
+            if (rightMouseStatus == 1)
+            {
+                rightMouseStatus = 0;
+                ccurrentShipDeck = buttonCount + 1;
+                menuNum = firstGameStageMenuEnum;
+            }
+        } else if(menuNum == bonusMenuEnum)
+        {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+                
+            int buttonCount = firstGameStageMenu.getSelectedButton(window);
+            if (rightMouseStatus == 1)
+            {
+                rightMouseStatus = 0;
+                switch (buttonCount)
+                {
+                    case 0:
+                        setCharString(currentUser.password, inputString, MAX_STRINGN);
+                        loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
+                        break;
+                    case 1:
+                        if(currentUser.money > RadarPrice && bonus[0] == 0)
+                        {
+                            currentUser.money -= RadarPrice;
+                        }    
+                        break;
+                    case 2:
+                        if(currentUser.money > artilleryPrice && bonus[1] == 0)
+                        {
+                            currentUser.money -= artilleryPrice;
+                        }   
+                        break;
+                    case 3:
+                        menuNum = firstGameStageMenuEnum;
+                        break;
+                }
+            }
+        }else if(menuNum == secondGameStageMenuEnum)
+        {
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+        }
+    }
+}
+
+void inputStream()
+{
+    while (1)
+    {
+        while (stringSetNum >= 0)
+        {
+            if (event.type == sf::Event::KeyPressed)
+            {
+                int code = event.text.unicode;
+                if (code < 255)
+                {
+                    if (code == 59)
+                    {
+                        if (inputString.size() > 0)
+                            inputString = inputString.substr(0, inputString.size() - 1);
+                    }
+                    else if (inputString.size() < MAX_STRINGN && toAnsi(code) >= 0)
+                        inputString += toAnsi(code);
+                }
+            }
+        }
+    }
+}
+
+int main()
+{
+    sf::Thread input(&inputStream), logic(&logicThread);
+    logic.launch();
+    input.launch();
+    srand(time(0));
+
+    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Start Game", 50, "font/consolaz.ttf");
+    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Rules", 50, "font/consolaz.ttf");
+    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "info", 50, "font/consolaz.ttf");
+    mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
+    mainMenu.allignButton(window, 0);
+
+    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Register", 50, "font/consolaz.ttf");
+    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Login", 50, "font/consolaz.ttf");
+    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "unauthorized", 50, "font/consolaz.ttf");
+    startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
+    startMenu.allignButton(window, 0);
+
+    firstGameStageMenu.createGrid(20, 20, 90, gridCount, gridCount, "image/water.jpg");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "ships", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "rotate", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "bonus", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "random", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "start", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
+    firstGameStageMenu.allignButton(window, 400);
+
+    shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "one deck", 50, "font/consolaz.ttf");
+    shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "two deck", 50, "font/consolaz.ttf");
+    shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "three deck", 50, "font/consolaz.ttf");
+    shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "four deck", 50, "font/consolaz.ttf");
+    shipSelectMenu.allignButton(window, 0);
+
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    infoMenu.allignButton(window, 0);
+
+    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "register", 50, "font/consolaz.ttf");
+    registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
+    registerMenu.allignButton(window, 0);
+
+    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "login", 50, "font/consolaz.ttf");
+    loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
+    loginMenu.allignButton(window, 0);
+
+    bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
+    bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Radar", 50, "font/consolaz.ttf");
+    bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Artillery", 50, "font/consolaz.ttf");
+    bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
+    bonusMenu.allignButton(window,0);
+
+    secondGameStageMenu.createGrid(20, 20, 90, gridCount, gridCount, "image/water.jpg");
+    secondGameStageMenu.createEnemyGrid(1600, 20, 30, gridCount, gridCount, "image/water.jpg");
+    secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Radar", 50, "font/consolaz.ttf");
+    secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Artillery", 50, "font/consolaz.ttf");
+    secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
+    secondGameStageMenu.allignButton(window, 300);
+
+    window.setFramerateLimit(30);
+    while (window.isOpen())
+    {
+        while (window.pollEvent(event))
+        {
+            if (event.type == sf::Event::Closed)
+                window.close();
+            if (event.type == sf::Event::MouseButtonPressed)
+                if (event.mouseButton.button == sf::Mouse::Left)
+                    rightMouseStatus = 1;
+            if (event.type == sf::Event::MouseButtonPressed)
+                if (event.mouseButton.button == sf::Mouse::Right)
+                    leftMouseStatus = 1;
+            if (event.type == sf::Event::MouseButtonPressed)
+                if (event.mouseButton.button == sf::Mouse::Middle)
+                    ;
+            middleMouseStatus = 1;
+        }
+
         window.clear();
         if (menuNum == mainMenuEnum)
             mainMenu.draw(window);
@@ -378,14 +582,19 @@ int main()
             infoMenu.draw(window);
         if (menuNum == firstGameStageMenuEnum)
             firstGameStageMenu.draw(window);
-        if(menuNum == shipSelectMenuEnum)
+        if (menuNum == shipSelectMenuEnum)
             shipSelectMenu.draw(window);
+        if (menuNum == bonusMenuEnum)
+            bonusMenu.draw(window);
+        if (menuNum == secondGameStageMenuEnum)
+            secondGameStageMenu.draw(window);
         window.display();
     }
 
     input.terminate();
     input.wait();
-    
+    logic.terminate();
+    logic.wait();
     profiles.write("saves");
     return 0;
 }
