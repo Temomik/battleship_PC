@@ -11,7 +11,7 @@ int menuStringSet = -1;
 std::string inputString = "";
 sf::Event event;
 
-enum menuNames {loginMenuEnum,registerMenuEnum,mainMenuEnum,infoMenuEnum,rulesMenuEnum,firstGameStageMenuEnum,secondGameStageMenuEnum,startMenuEnum};
+enum menuNames {loginMenuEnum,registerMenuEnum,mainMenuEnum,infoMenuEnum,rulesMenuEnum,firstGameStageMenuEnum,secondGameStageMenuEnum,shipSelectMenuEnum,startMenuEnum};
 
 int toAnsi(int code)
 {
@@ -87,7 +87,7 @@ int main()
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Rules", 50, "font/consolaz.ttf");
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "info", 50, "font/consolaz.ttf");
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
-    mainMenu.allignButton(window);
+    mainMenu.allignButton(window,0);
 
     View rulesMenu("image/rules.jpg");
 
@@ -96,38 +96,48 @@ int main()
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Login", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "unauthorized", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
-    startMenu.allignButton(window);
+    startMenu.allignButton(window,0);
     
     View firstGameStageMenu("image/background.jpg");
-    firstGameStageMenu.createGrid(20,20,40,10,10,"image/water.jpg");
-    // firstGameStageMenu.addButton(0, 0, 800, 800, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
-    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
-    firstGameStageMenu.allignButton(window);
+    firstGameStageMenu.createGrid(20,20,90,10,10,"image/water.jpg");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "ships", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "start", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "bonus", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
+    firstGameStageMenu.allignButton(window,400);
+    
+    View shipSelectMenu("image/background.jpg");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "one deck", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "two deck", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "three deck", 50, "font/consolaz.ttf");
+    firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "four deck", 50, "font/consolaz.ttf");
+    firstGameStageMenu.allignButton(window,400);
 
     View infoMenu("image/background.jpg");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
-    infoMenu.allignButton(window);
+    infoMenu.allignButton(window,0);
 
     View registerMenu("image/background.jpg");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "register", 50, "font/consolaz.ttf");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
-    registerMenu.allignButton(window);
+    registerMenu.allignButton(window,0);
 
     View loginMenu("image/background.jpg");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "login", 50, "font/consolaz.ttf");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
-    loginMenu.allignButton(window);
+    loginMenu.allignButton(window,0);
 
     window.setFramerateLimit(30);
     int mouseStatus = 0;
     int menuNum = startMenuEnum;
+    int lastCell = -1;
     while (window.isOpen())
     {
         while (window.pollEvent(event))
@@ -316,6 +326,40 @@ int main()
                 menuNum = mainMenuEnum;
         }else if(menuNum == firstGameStageMenuEnum)
         {
+            int buttonCount = registerMenu.getSelectedButton(window);
+            switch (buttonCount)
+            {
+            case 0:
+                menuNum = shipSelectMenuEnum;
+                break;
+            case 1:
+                break;
+            case 2:
+                break;
+            case 3:
+                break;
+            default:
+                break;
+            }
+            if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+                menuNum = mainMenuEnum;
+            if(mouseStatus == 1)
+            {
+                mouseStatus = 0;
+                int tmp = firstGameStageMenu.getSelectedCell(window);
+                firstGameStageMenu.markCell(window,tmp,"image/water_.jpg");
+            }
+            // if(tmp != lastCell)
+            // {
+            //     if(lastCell >= 0)
+            //     {
+            //         firstGameStageMenu.markCell(window,lastCell,"image/water.jpg");
+            //     }
+            //     lastCell = tmp;
+            // }
+            // firstGameStageMenu.markSelectedCell(window,"image/water_.jpg");
+        }else if(menuNum == shipSelectMenuEnum)
+        {
             if(sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
                 menuNum = mainMenuEnum;
         }
@@ -334,6 +378,8 @@ int main()
             infoMenu.draw(window);
         if (menuNum == firstGameStageMenuEnum)
             firstGameStageMenu.draw(window);
+        if(menuNum == shipSelectMenuEnum)
+            shipSelectMenu.draw(window);
         window.display();
     }
 

@@ -19,6 +19,7 @@ public:
     void setText(std::string text,size_t size,std::string font);
     void setText(std::string text);
     bool isButtonSelect(sf::RenderWindow& window);
+    void setTexture(std::string texture, int x = 0,int y = 0);
     sf::IntRect getRect();
     ~Button();
 };
@@ -69,6 +70,15 @@ sf::IntRect Button::getRect()
 {
     return rect;
 }
+
+void Button::setTexture(std::string texture, int x,int y )
+{
+    this->texture.loadFromFile(texture);
+    sprite.setTexture(this->texture);
+    rect = sf::IntRect(x,y,rect.width,rect.height);
+    sprite.setTextureRect(rect);
+}
+
 
 void Button::setText(std::string text,size_t size,std::string font)
 {

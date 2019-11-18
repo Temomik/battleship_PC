@@ -19,7 +19,11 @@ public:
     void createGrid(int x,int y,int size,int width,int height,std::string filename);
     void draw(sf::RenderWindow& window);
     int getSelectedButton(sf::RenderWindow& window);
-    void allignButton(sf::RenderWindow& window);
+    void allignButton(sf::RenderWindow& window,int shift);
+    void markSelectedCell(sf::RenderWindow& window, std::string texture);
+    void markCell(sf::RenderWindow& window,int num, std::string texture);
+    int getSelectedCell(sf::RenderWindow& window);
+    void setGridData(int num,int data);
     void setButtonText(size_t numb, std::string text,size_t size,std::string font);
 };
 
@@ -29,12 +33,32 @@ View::View(std::string backgroundName)
     sprite.setTexture(texture);
 }
 
+void View::setGridData(int num,int data)
+{
+    grid.setData(num,data);
+}
+    
+int View::getSelectedCell(sf::RenderWindow& window)
+{
+    return grid.getSelectedCell(window);
+}
+
+void View::markSelectedCell(sf::RenderWindow& window, std::string texture)
+{
+    grid.markSelectedCell(window,texture);
+}
+
+void View::markCell(sf::RenderWindow& window,int num, std::string texture)
+{
+    grid.markCell(window,num,texture);
+}
+
 void View::createGrid(int x,int y,int size,int width,int height,std::string filename)
 {
     grid.create(x,y,size,width,height,filename);
 }
 
-void View::allignButton(sf::RenderWindow& window)
+void View::allignButton(sf::RenderWindow& window,int shift)
 {
     int maxHeightFill = 0;
     for(auto it : buttons)
@@ -48,7 +72,7 @@ void View::allignButton(sf::RenderWindow& window)
     int verticalAllign = 0; 
     for(int i = 0; i < buttons.size();i++) {
         verticalAllign += verticalShift;
-        buttons[i].setPosition(windowWidth - buttons[i].getRect().width/2,verticalAllign);
+        buttons[i].setPosition(windowWidth - buttons[i].getRect().width/2 + shift,verticalAllign);
         verticalAllign += buttons[i].getRect().height;
     }
 }
