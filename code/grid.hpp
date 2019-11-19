@@ -14,10 +14,13 @@ public:
     void create(int x,int y,int size,int width,int height,std::string filename);
     void draw(sf::RenderWindow& window);
     int getSelectedCell(sf::RenderWindow& window);
+    void setData(std::vector<int>& data);
+    void setGrid(std::vector<Button>& grid);
     void markSelectedCell(sf::RenderWindow& window,std::string texture);
-    void markCell(sf::RenderWindow& window,int num,std::string texture);
+    void markCell(int num,std::string texture);
     void markUnselectedCell(sf::RenderWindow& window,std::string texture);
     std::vector<int>& getData();
+    std::vector<Button>& getGrid();
     void setData(int num,int data);
     ~Grid();
 };
@@ -33,6 +36,21 @@ Grid::Grid(int x,int y,int size,int width,int height, std::string filename)
     //     }
     //     y += size;
     // }
+}
+
+std::vector<Button>& Grid::getGrid()
+{
+    return this->buttons;
+}
+
+void Grid::setData(std::vector<int>& data)
+{
+    this->data = data;
+}
+
+void Grid::setGrid(std::vector<Button>& grid)
+{
+    this->buttons = grid;
 }
 
 std::vector<int>& Grid::getData()
@@ -58,7 +76,7 @@ void Grid::markSelectedCell(sf::RenderWindow& window,std::string texture)
     buttons[getSelectedCell(window)].setTexture(texture);
 }
 
-void Grid::markCell(sf::RenderWindow& window,int num,std::string texture)
+void Grid::markCell(int num,std::string texture)
 {
     buttons[num].setTexture(texture);
 }

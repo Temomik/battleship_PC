@@ -22,9 +22,13 @@ public:
     int getSelectedButton(sf::RenderWindow& window);
     void allignButton(sf::RenderWindow& window,int shift);
     void markSelectedCell(sf::RenderWindow& window, std::string texture);
-    void markCell(sf::RenderWindow& window,int num, std::string texture);
+    void markCell(int num, std::string texture);
+    void markEnemyCell(int num, std::string texture);
     std::vector<int>& getGridData();
+    std::vector<Button>& getGrid();
     int getSelectedCell(sf::RenderWindow& window);
+    void setEnemyGridData(std::vector<int>& data);
+    void setEnemyGrid(std::vector<Button>& grid);
     void setGridData(int num,int data);
     void setButtonText(size_t numb, std::string text,size_t size,std::string font);
 };
@@ -33,6 +37,16 @@ View::View(std::string backgroundName)
 {
     texture.loadFromFile(backgroundName);
     sprite.setTexture(texture);
+}
+
+std::vector<Button>& View::getGrid()
+{
+    return this->grid.getGrid();
+}
+
+void View::setEnemyGrid(std::vector<Button>& grid)
+{
+    enemyGrid.setGrid(grid);
 }
 
 std::vector<int>& View::getGridData()
@@ -44,7 +58,12 @@ void View::setGridData(int num,int data)
 {
     grid.setData(num,data);
 }
-    
+
+void View::setEnemyGridData(std::vector<int>& data)
+{
+    enemyGrid.setData(data);
+}   
+  
 int View::getSelectedCell(sf::RenderWindow& window)
 {
     return grid.getSelectedCell(window);
@@ -55,11 +74,14 @@ void View::markSelectedCell(sf::RenderWindow& window, std::string texture)
     grid.markSelectedCell(window,texture);
 }
 
-void View::markCell(sf::RenderWindow& window,int num, std::string texture)
+void View::markCell(int num, std::string texture)
 {
-    grid.markCell(window,num,texture);
+    grid.markCell(num,texture);
 }
-
+void View::markEnemyCell(int num, std::string texture)
+{
+    enemyGrid.markCell(num,texture);
+}
 void View::createGrid(int x,int y,int size,int width,int height,std::string filename)
 {
     grid.create(x,y,size,width,height,filename);

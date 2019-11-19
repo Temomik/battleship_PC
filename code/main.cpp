@@ -47,7 +47,7 @@ int toAnsi(int code)
 std::string toString(int num)
 {
     char buff[50];
-    itoa(num, buff, 50);
+    itoa(num, buff, 10);
     return std::string(buff);
 }
 
@@ -124,40 +124,26 @@ int leftMouseStatus = 0;
 int middleMouseStatus = 0;
 int menuNum = startMenuEnum;
 Profiles profiles("saves");
+    Profile currentUser = {"", "", 0, 0};
+
+void cloneArray(int* first,const int* second,int size)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        first[i] = second[i];
+    }
+}
 
 void logicThread()
 {
     int lastCell = -1;
     int ccurrentShipDeck = 0;
     int rotate = 0;
-    Profile currentUser = {"", "", 0, 0};
     std::stack<int> lastMenu;
+    int startGameConditions = 0;
+    int tmpShips[shipCount];
     while (1)
     {
-
-        switch (stringSetNum)
-        {
-        case 0:
-            setCharString(currentUser.login, inputString, MAX_STRINGN);
-            loginMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
-            break;
-        case 1:
-            setCharString(currentUser.password, inputString, MAX_STRINGN);
-            loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
-            break;
-        case 2:
-            setCharString(currentUser.login, inputString, MAX_STRINGN);
-            registerMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
-            break;
-        case 3:
-            setCharString(currentUser.password, inputString, MAX_STRINGN);
-            registerMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
-            break;
-        case 4:
-            break;
-        default:
-            break;
-        }
 
         if (menuNum == mainMenuEnum)
         {
@@ -168,6 +154,12 @@ void logicThread()
                 switch (buttonCount)
                 {
                 case 0:
+                    for (size_t i = 0; i < gridCount * gridCount; i++)
+                    {
+                        firstGameStageMenu.setGridData(i, 0);
+                        firstGameStageMenu.markCell( i, "image/water.jpg");
+                    }
+                    cloneArray(tmpShips,ships,shipCount);
                     menuNum = firstGameStageMenuEnum;
                     break;
                 case 1:
@@ -281,6 +273,8 @@ void logicThread()
                     stringSetNum = -1;
                     if (profiles.isConsistProfile(currentUser))
                     {
+                        currentUser = profiles.getProfile(currentUser);
+                        // currentUser.money = 6000;
                         menuNum = mainMenuEnum;
                     }
                     else
@@ -303,7 +297,7 @@ void logicThread()
                 default:
                     break;
                 }
-            }
+            }   
         }
         else if (menuNum == rulesMenuEnum)
         {
@@ -318,8 +312,6 @@ void logicThread()
         else if (menuNum == firstGameStageMenuEnum)
         {
             int buttonCount = firstGameStageMenu.getSelectedButton(window);
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                menuNum = mainMenuEnum;
             if (rightMouseStatus == 1)
             {
                 rightMouseStatus = 0;
@@ -332,15 +324,16 @@ void logicThread()
                     rotate ^= 1;
                     break;
                 case 2:
+                    bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
                     menuNum = bonusMenuEnum;
                     break;
                 case 3: 
-                    // ships = int[shipCount]{1, 1, 1, 1, 2, 2, 2, 3, 3, 4};
-                    for (size_t i = 0; i < gridCount * gridCount; i++)
-                    {
+                        for (size_t i = 0; i < gridCount * gridCount; i++)
+                        {
                         firstGameStageMenu.setGridData(i, 0);
-                        firstGameStageMenu.markCell(window, i, "image/water.jpg");
-                    }
+                        firstGameStageMenu.markCell( i, "image/water.jpg");
+                        }
+                        cloneArray(tmpShips,ships,shipCount);
                     for (int i = 0; i < shipCount; i++)
                     {
                         int cord, rotate;
@@ -348,32 +341,49 @@ void logicThread()
                         {
                             cord = rand() % 100;
                             rotate = rand() % 2 - 1;
-                            if (canPlaceShip(ships[i], cord, gridCount, rotate, firstGameStageMenu.getGridData()))
+                            if (canPlaceShip(tmpShips[i], cord, gridCount, rotate, firstGameStageMenu.getGridData()))
                                 break;
                         }
-                        for (int j = 0; j < ships[i]; j++)
+                        for (int j = 0; j < tmpShips[i]; j++)
                             if (rotate == 0)
                             {
-                                firstGameStageMenu.markCell(window, cord + j, "image/water_.jpg");
+                                firstGameStageMenu.markCell( cord + j, "image/water_.jpg");
                                 firstGameStageMenu.setGridData(cord + j, 1);
                             }
                             else
                             {
-                                firstGameStageMenu.markCell(window, cord + j * gridCount, "image/water_.jpg");
+                                firstGameStageMenu.markCell( cord + j * gridCount, "image/water_.jpg");
                                 firstGameStageMenu.setGridData(cord + j * gridCount, 1);
                             }
+                        tmpShips[i] = -1;
                     }
                     break;
                 case 4:
-                    menuNum = secondGameStageMenuEnum;
+                    startGameConditions = true;
+                    for(int i = 0; i < shipCount; i++)
+                    {
+                        if(tmpShips[i] > 0)
+                        {
+                            startGameConditions = false;
+                            break;
+                        }
+                    }
+                    if(startGameConditions == 1)
+                    {
+                        secondGameStageMenu.setEnemyGridData(firstGameStageMenu.getGridData());
+                        
+                        for (int i = 0; i < shipCount*shipCount;i++)
+                        {
+                            if(firstGameStageMenu.getGridData()[i] == 1)
+                            {   
+                                secondGameStageMenu.markEnemyCell( i,"image/water_.jpg");
+                            }
+                        }
+                        menuNum = secondGameStageMenuEnum;
+                    }
                     break;
                 case 5:
                     menuNum = mainMenuEnum;
-                    for (size_t i = 0; i < gridCount * gridCount; i++)
-                    {
-                        firstGameStageMenu.setGridData(i, 0);
-                        firstGameStageMenu.markCell(window, i, "image/water.jpg");
-                    }
                     break;
                 default:
                     break;
@@ -384,9 +394,9 @@ void logicThread()
                     bool isShipAmount = false;
                     for (int i = 0; i < shipCount; i++)
                     {
-                        if (ships[i] == ccurrentShipDeck)
+                        if (tmpShips[i] == ccurrentShipDeck)
                         {
-                            ships[i] = -1;
+                            tmpShips[i] = -1;
                             isShipAmount = true;
                             break;
                         }
@@ -396,12 +406,12 @@ void logicThread()
                         {
                             if (rotate == 0)
                             {
-                                firstGameStageMenu.markCell(window, tmp + i, "image/water_.jpg");
+                                firstGameStageMenu.markCell( tmp + i, "image/water_.jpg");
                                 firstGameStageMenu.setGridData(tmp + i, 1);
                             }
                             else
                             {
-                                firstGameStageMenu.markCell(window, tmp + i * gridCount, "image/water_.jpg");
+                                firstGameStageMenu.markCell( tmp + i * gridCount, "image/water_.jpg");
                                 firstGameStageMenu.setGridData(tmp + i * gridCount, 1);
                             }
                         }
@@ -421,29 +431,31 @@ void logicThread()
             }
         } else if(menuNum == bonusMenuEnum)
         {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                menuNum = mainMenuEnum;
-                
-            int buttonCount = firstGameStageMenu.getSelectedButton(window);
+            // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            //     menuNum = mainMenuEnum;
+            int buttonCount = bonusMenu.getSelectedButton(window);
             if (rightMouseStatus == 1)
             {
                 rightMouseStatus = 0;
                 switch (buttonCount)
                 {
                     case 0:
-                        setCharString(currentUser.password, inputString, MAX_STRINGN);
-                        loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
+                        // setCharString(currentUser.password, inputString, MAX_STRINGN);
                         break;
                     case 1:
                         if(currentUser.money > RadarPrice && bonus[0] == 0)
                         {
+                            bonus[0] = 1;
                             currentUser.money -= RadarPrice;
+                            bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
                         }    
                         break;
                     case 2:
                         if(currentUser.money > artilleryPrice && bonus[1] == 0)
                         {
+                            bonus[1] = 1;
                             currentUser.money -= artilleryPrice;
+                            bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
                         }   
                         break;
                     case 3:
@@ -453,8 +465,25 @@ void logicThread()
             }
         }else if(menuNum == secondGameStageMenuEnum)
         {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-                menuNum = mainMenuEnum;
+            int isMyStep = true;
+            int buttonCount = secondGameStageMenu.getSelectedButton(window);
+            if (rightMouseStatus == 1)
+            {
+                rightMouseStatus = 0;
+                switch (buttonCount)
+                {
+                    case 0:
+                        // setCharString(currentUser.password, inputString, MAX_STRINGN);
+                        break;
+                    case 1:   
+                        break;
+                    case 2:  
+                        break;
+                    case 3:
+                        currentUser.money = bonus[0] * RadarPrice + bonus[1] * RadarPrice;
+                        menuNum = mainMenuEnum;
+                        break;
+                }
         }
     }
 }
@@ -551,7 +580,32 @@ int main()
     window.setFramerateLimit(30);
     while (window.isOpen())
     {
-        while (window.pollEvent(event))
+        
+
+        switch (stringSetNum)
+        {
+        case 0:
+            setCharString(currentUser.login, inputString, MAX_STRINGN);
+            loginMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
+            break;
+        case 1:
+            setCharString(currentUser.password, inputString, MAX_STRINGN);
+            loginMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
+            break;
+        case 2:
+            setCharString(currentUser.login, inputString, MAX_STRINGN);
+            registerMenu.setButtonText(0, inputString, 50, "font/consolaz.ttf");
+            break;
+        case 3:
+            setCharString(currentUser.password, inputString, MAX_STRINGN);
+            registerMenu.setButtonText(1, inputString, 50, "font/consolaz.ttf");
+            break;
+        case 4:
+            break;
+        default:
+            break;  
+        }
+        while (window.pollEvent(event))  
         {
             if (event.type == sf::Event::Closed)
                 window.close();
@@ -563,7 +617,6 @@ int main()
                     leftMouseStatus = 1;
             if (event.type == sf::Event::MouseButtonPressed)
                 if (event.mouseButton.button == sf::Mouse::Middle)
-                    ;
             middleMouseStatus = 1;
         }
 
@@ -595,6 +648,8 @@ int main()
     input.wait();
     logic.terminate();
     logic.wait();
+    profiles.update(currentUser);
+    std::cout << "kek";
     profiles.write("saves");
     return 0;
 }

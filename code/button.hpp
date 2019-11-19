@@ -90,8 +90,7 @@ void Button::setText(std::string text,size_t size,std::string font)
         this->text.setCharacterSize(size);
     }
     this->text.setPosition(sprite.getPosition().x + (rect.width/2 - (size*text.size()/2+size/2)/2),sprite.getPosition().y+rect.height/2-size/2);
-    // this->text.setPosition(sprite.getPosition().x ,sprite.getPosition().y);
-}
+    }
 
 bool Button::isButtonSelect(sf::RenderWindow& window)
 {

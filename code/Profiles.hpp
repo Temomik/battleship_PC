@@ -25,6 +25,8 @@ public:
     bool write(std::string filename);
     void addProfile(Profile& profile);
     bool isConsistLogin(Profile& profile);
+    Profile getProfile(Profile& profile);
+    void update(Profile& profile);
     bool isConsistProfile(Profile& profile);
     ~Profiles();
 };
@@ -44,6 +46,29 @@ Profiles::Profiles(std::string filename)
     profiles.pop_back();    
     file.close();
 }
+
+void Profiles:: update(Profile& profile)
+{
+    for(int i = 0 ; i < profiles.size();i++)
+    {
+        if(strcmp(profile.login,profiles[i].login) == 0)
+        {
+            profiles[i].record = profile.record;
+            profiles[i].money = profile.money;
+            break;
+        }
+    }
+}
+
+Profile Profiles::getProfile(Profile& profile)
+{
+    for(auto it : profiles)
+    {
+        if(strcmp(profile.login,it.login) == 0)
+            return it;
+    }
+}
+
 void Profiles::addProfile(Profile& profile)
 {
     profiles.push_back(profile);
@@ -76,7 +101,6 @@ bool Profiles::write(std::string filename)
     file.open(filename);
     if(!file)
         return false;
-    file.seekp(0, std::ios::beg);  
     if(profiles.size() > 0)
         for(auto it : profiles)
             {
