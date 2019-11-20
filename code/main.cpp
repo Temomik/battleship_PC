@@ -63,23 +63,36 @@ int findDirectionsShip(const std::vector<int>& ships,int num)
     if(num + size < ships.size() && (ships[num + size] == 1 || ships[num + size] == 3))
         return size;
     if(num - size >= 0 && (ships[num - size] == 1 || ships[num - size] == 3))
-        return size;
+        return -size;
+    return 0;
 }
 
 int findStartShipCord(const std::vector<int>& ships,int num)
 {
     int directions = findDirectionsShip(ships,num);
+    if(directions == 0)
+        return num;
     for(; num < ships.size() && num >= 0 && ( ships[num] == 1 || ships[num] == 3); num += directions);
     return num -= directions;
-}
+}   
 
 bool isShipAlive(const std::vector<int>& ships, int num)
 {   
     num = findStartShipCord(ships,num);
-    while (ships[num] == 1 || ships[num] == 3)
+    int directions = findDirectionsShip(ships,num);
+    if(directions == 0)
     {
-        
+        if(ships[num] == 1) 
+            return false;
+        return true;
     }
+    while (num >=0 && num < ships.size() && (ships[num] == 1 || ships[num] == 3))
+    {
+        if(ships[num] == 1)
+            return false;
+        num+=directions;
+    }
+    return true;
 }
 
 bool canPlaceShip(int deck, int cord, int gridCount, int rotate, std::vector<int> &grid)
@@ -546,8 +559,36 @@ void logicThread()
                             secondGameStageMenu.markCell(selectedCell,"image/water-.jpg");
                         } else if(secondGameStageMenu.getGridData()[selectedCell] == 1)
                         {
-                            secondGameStageMenu.setGridData(selectedCell,2);
+                            secondGameStageMenu.setGridData(selectedCell,3);
                             secondGameStageMenu.markCell(selectedCell,"image/water=.jpg");
+                            if(isShipAlive(secondGameStageMenu.getGridData(),selectedCell))
+                            {
+                                std::vector<int> allShips = secondGameStageMenu.getGridData();
+                                int num = findStartShipCord(allShips,selectedCell);
+                                int directions = findDirectionsShip(allShips,num);
+                                std::cout << num << std::endl;
+                                for(;;num += directions)
+                                {   
+                                    if(num >= 0 && num < allShips.size() && (allShips[num] == 1 || allShips[num] == 3))
+                                    {
+                                        int tmpNum = num-1-gridCount;
+                                        for (int y = 0; y < 3; tmpNum += gridCount - 3,y++)
+                                        {
+                                            for (int x = 0; x < 3; tmpNum += 1, x++)
+                                            {
+                                                if(tmpNum >=0 && tmpNum < allShips.size() && allShips[tmpNum] == 0)
+                                                {
+                                                    secondGameStageMenu.setGridData(selectedCell, 2);
+                                                    secondGameStageMenu.markCell(selectedCell, "image/water-.jpg");
+                                                }
+                                            }
+                                        }
+                                    } else
+                                    {
+                                        break;
+                                    }
+                                }
+                            }
                         }
                     }
                 }
