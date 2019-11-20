@@ -6,6 +6,8 @@
 #include <iostream>
 #include <conio.h>
 #include <ctime>
+#include <math.h>
+
 int stringSetNum = -1;
 int menuStringSet = -1;
 std::string inputString = "";
@@ -49,6 +51,35 @@ std::string toString(int num)
     char buff[50];
     itoa(num, buff, 10);
     return std::string(buff);
+}
+
+int findDirectionsShip(const std::vector<int>& ships,int num)
+{
+    const int size = sqrt(ships.size());
+    if(num + 1 < ships.size() && (ships[num + 1] == 1 || ships[num + 1] == 3))
+        return 1;
+    if(num - 1 >= 0 && (ships[num - 1] == 1 || ships[num - 1] == 3))
+        return -1;
+    if(num + size < ships.size() && (ships[num + size] == 1 || ships[num + size] == 3))
+        return size;
+    if(num - size >= 0 && (ships[num - size] == 1 || ships[num - size] == 3))
+        return size;
+}
+
+int findStartShipCord(const std::vector<int>& ships,int num)
+{
+    int directions = findDirectionsShip(ships,num);
+    for(; num < ships.size() && num >= 0 && ( ships[num] == 1 || ships[num] == 3); num += directions);
+    return num -= directions;
+}
+
+bool isShipAlive(const std::vector<int>& ships, int num)
+{   
+    num = findStartShipCord(ships,num);
+    while (ships[num] == 1 || ships[num] == 3)
+    {
+        
+    }
 }
 
 bool canPlaceShip(int deck, int cord, int gridCount, int rotate, std::vector<int> &grid)
@@ -108,6 +139,44 @@ void setCharString(char *first, std::string second, int max)
         first[second.size()] = NULL;
     }
 }
+
+void cloneArray(int* first,const int* second,int size)
+{
+    for (size_t i = 0; i < size; i++)
+    {
+        first[i] = second[i];
+    }
+}
+
+void randomShipPlace(const int* ships,View& view)
+{
+    int tmpShips[shipCount];
+    cloneArray(tmpShips,ships,shipCount);
+    for (int i = 0; i < shipCount; i++)
+    {
+        int cord, rotate;
+        while (1)
+        {
+            cord = rand() % 100;
+            rotate = rand() % 2 - 1;
+            if (canPlaceShip(tmpShips[i], cord, gridCount, rotate, view.getGridData()))
+                break;
+        }
+        for (int j = 0; j < tmpShips[i]; j++)
+            if (rotate == 0)
+            {
+                view.markCell(cord + j, "image/water_.jpg");
+                view.setGridData(cord + j, 1);
+            }
+            else
+            {
+                view.markCell(cord + j * gridCount, "image/water_.jpg");
+                view.setGridData(cord + j * gridCount, 1);
+            }
+        tmpShips[i] = -1;
+    }
+}
+
 View rulesMenu("image/rules.jpg");
 View registerMenu("image/background.jpg");
 View loginMenu("image/background.jpg");
@@ -124,15 +193,8 @@ int leftMouseStatus = 0;
 int middleMouseStatus = 0;
 int menuNum = startMenuEnum;
 Profiles profiles("saves");
-    Profile currentUser = {"", "", 0, 0};
+Profile currentUser = {"", "", 0, 0};
 
-void cloneArray(int* first,const int* second,int size)
-{
-    for (size_t i = 0; i < size; i++)
-    {
-        first[i] = second[i];
-    }
-}
 
 void logicThread()
 {
@@ -196,6 +258,7 @@ void logicThread()
                     menuNum = loginMenuEnum;
                     break;
                 case 2:
+                    currentUser.money = 6000;
                     menuNum = mainMenuEnum;
                     break;
                 case 3:
@@ -274,7 +337,7 @@ void logicThread()
                     if (profiles.isConsistProfile(currentUser))
                     {
                         currentUser = profiles.getProfile(currentUser);
-                        // currentUser.money = 6000;
+                        // currentUser.money = 6000;    
                         menuNum = mainMenuEnum;
                     }
                     else
@@ -330,45 +393,26 @@ void logicThread()
                 case 3: 
                         for (size_t i = 0; i < gridCount * gridCount; i++)
                         {
-                        firstGameStageMenu.setGridData(i, 0);
-                        firstGameStageMenu.markCell( i, "image/water.jpg");
+                            firstGameStageMenu.setGridData(i, 0);
+                            firstGameStageMenu.markCell( i, "image/water.jpg");
                         }
-                        cloneArray(tmpShips,ships,shipCount);
-                    for (int i = 0; i < shipCount; i++)
-                    {
-                        int cord, rotate;
-                        while (1)
-                        {
-                            cord = rand() % 100;
-                            rotate = rand() % 2 - 1;
-                            if (canPlaceShip(tmpShips[i], cord, gridCount, rotate, firstGameStageMenu.getGridData()))
-                                break;
-                        }
-                        for (int j = 0; j < tmpShips[i]; j++)
-                            if (rotate == 0)
-                            {
-                                firstGameStageMenu.markCell( cord + j, "image/water_.jpg");
-                                firstGameStageMenu.setGridData(cord + j, 1);
-                            }
-                            else
-                            {
-                                firstGameStageMenu.markCell( cord + j * gridCount, "image/water_.jpg");
-                                firstGameStageMenu.setGridData(cord + j * gridCount, 1);
-                            }
-                        tmpShips[i] = -1;
-                    }
+                        randomShipPlace(ships,firstGameStageMenu);
+                        startGameConditions = true;
                     break;
                 case 4:
-                    startGameConditions = true;
-                    for(int i = 0; i < shipCount; i++)
+                    if(startGameConditions == false)
                     {
-                        if(tmpShips[i] > 0)
+                        startGameConditions = true;
+                        for(int i = 0; i < shipCount; i++)
                         {
-                            startGameConditions = false;
-                            break;
+                            if(tmpShips[i] > 0)
+                            {
+                                startGameConditions = false;
+                                break;
+                            }
                         }
                     }
-                    if(startGameConditions == 1)
+                    if(startGameConditions == true)
                     {
                         secondGameStageMenu.setEnemyGridData(firstGameStageMenu.getGridData());
                         
@@ -379,6 +423,9 @@ void logicThread()
                                 secondGameStageMenu.markEnemyCell( i,"image/water_.jpg");
                             }
                         }
+                        randomShipPlace(ships,secondGameStageMenu);
+                        secondGameStageMenu.setButtonText(0, "Radar " + toString(bonus[0]), 50, "font/consolaz.ttf");
+                        secondGameStageMenu.setButtonText(1, "Artillery " + toString(bonus[1]), 50, "font/consolaz.ttf");
                         menuNum = secondGameStageMenuEnum;
                     }
                     break;
@@ -431,8 +478,6 @@ void logicThread()
             }
         } else if(menuNum == bonusMenuEnum)
         {
-            // if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-            //     menuNum = mainMenuEnum;
             int buttonCount = bonusMenu.getSelectedButton(window);
             if (rightMouseStatus == 1)
             {
@@ -465,25 +510,48 @@ void logicThread()
             }
         }else if(menuNum == secondGameStageMenuEnum)
         {
+            bool isEndGameConditions = false;
+            int bonusNumberChoosed = 0;
             int isMyStep = true;
-            int buttonCount = secondGameStageMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
+            while(!isEndGameConditions){
+                int buttonCount = secondGameStageMenu.getSelectedButton(window);
+                if (rightMouseStatus == 1 && buttonCount >= 0)
                 {
+                    rightMouseStatus = 0;
+                    switch (buttonCount)
+                    {
                     case 0:
-                        // setCharString(currentUser.password, inputString, MAX_STRINGN);
                         break;
-                    case 1:   
+                    case 1:
                         break;
-                    case 2:  
-                        break;
-                    case 3:
+                    case 2:
                         currentUser.money = bonus[0] * RadarPrice + bonus[1] * RadarPrice;
                         menuNum = mainMenuEnum;
+                        isEndGameConditions = true;
                         break;
+                    default:
+                        break;
+                    }
                 }
+                
+                int selectedCell = secondGameStageMenu.getSelectedCell(window);
+                if(selectedCell >= 0)
+                {
+                    if(rightMouseStatus == 1)
+                    {
+                        rightMouseStatus = 0;
+                        if(secondGameStageMenu.getGridData()[selectedCell] == 0)
+                        {
+                            secondGameStageMenu.setGridData(selectedCell,2);
+                            secondGameStageMenu.markCell(selectedCell,"image/water-.jpg");
+                        } else if(secondGameStageMenu.getGridData()[selectedCell] == 1)
+                        {
+                            secondGameStageMenu.setGridData(selectedCell,2);
+                            secondGameStageMenu.markCell(selectedCell,"image/water=.jpg");
+                        }
+                    }
+                }
+            }
         }
     }
 }
@@ -577,11 +645,9 @@ int main()
     secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
     secondGameStageMenu.allignButton(window, 300);
 
-    window.setFramerateLimit(30);
+    window.setFramerateLimit(90);
     while (window.isOpen())
     {
-        
-
         switch (stringSetNum)
         {
         case 0:
