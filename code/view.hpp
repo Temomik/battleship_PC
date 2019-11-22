@@ -5,33 +5,35 @@
 #include <vector>
 #include "grid.hpp"
 
+const int MaxButtonFunctions = 10;
+
 class View
 {
 private:
     sf::Texture texture;
     sf::Sprite sprite;
     std::vector<Button> buttons;
-    Grid grid, enemyGrid;
+    std::vector<Grid> grids;
+    void (*operations[MaxButtonFunctions])() ;
+    // Grid grid, enemyGrid;
 
 public:
     View(std::string backgroundName);
     ~View();
     void addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text, size_t fontSize, std::string font);
     void createGrid(int x, int y, int size, int width, int height, std::string filename);
-    void createEnemyGrid(int x, int y, int size, int width, int height, std::string filename);
+    // void createEnemyGrid(int x, int y, int size, int width, int height, std::string filename);
     void draw(sf::RenderWindow &window);
     int getSelectedButton(sf::RenderWindow &window);
     void allignButton(sf::RenderWindow &window, int shift);
-    void markSelectedCell(sf::RenderWindow &window, std::string texture);
-    void markCell(int num, std::string texture);
-    void markEnemyCell(int num, std::string texture);
-    std::vector<int> &getGridData();
-    std::vector<int> &getEnemyGridData();
-    std::vector<Button> &getGrid();
-    int getSelectedCell(sf::RenderWindow &window);
-    void setEnemyGridData(std::vector<int> &data);
-    void setEnemyGrid(std::vector<Button> &grid);
-    void setGridData(int num, int data);
+    void markSelectedCell(sf::RenderWindow &window, std::string texture, int num);
+    void markCell(int num, std::string texture, int gridNum);
+    std::vector<int> &getGridData(int num);
+    std::vector<Button> &getGrid(int num);
+    int getSelectedCell(sf::RenderWindow &window, int num);
+    void setGridData(int num, int data,int gridNum);
+    void setButtonSprite(int buttonNum,std::string filename);
+    void setGridData(std::vector<int>& data,int gridNum);
     void setButtonText(size_t numb, std::string text, size_t size, std::string font);
 };
 
@@ -41,65 +43,54 @@ View::View(std::string backgroundName)
     sprite.setTexture(texture);
 }
 
-std::vector<Button> &View::getGrid()
+std::vector<Button> &View::getGrid(int num)
 {
-    return this->grid.getGrid();
+    return this->grids[num].getGrid();
 }
 
-void View::setEnemyGrid(std::vector<Button> &grid)
+void View::setButtonSprite(int buttonNum,std::string filename)
 {
-    enemyGrid.setGrid(grid);
+    buttons[buttonNum].setTexture(filename,buttons[buttonNum].getRect().left,buttons[buttonNum].getRect().top);
 }
 
-std::vector<int> &View::getGridData()
+std::vector<int> &View::getGridData(int num)
 {
-    return grid.getData();
+    return grids[num].getData();
 }
 
-std::vector<int> &View::getEnemyGridData()
+void View::setGridData(int num, int data,int gridNum)
 {
-    return enemyGrid.getData();
+    grids[gridNum].setData(num, data);
 }
 
-void View::setGridData(int num, int data)
+void View::setGridData(std::vector<int>& data,int gridNum)
 {
-    grid.setData(num, data);
+    this->grids[gridNum].setData(data); 
 }
 
-void View::setEnemyGridData(std::vector<int> &data)
+int View::getSelectedCell(sf::RenderWindow &window, int num)
 {
-    enemyGrid.setData(data);
+    return grids[num].getSelectedCell(window);
 }
 
-int View::getSelectedCell(sf::RenderWindow &window)
+void View::markSelectedCell(sf::RenderWindow &window, std::string texture, int num)
 {
-    return grid.getSelectedCell(window);
+    grids[num].markSelectedCell(window, texture);
 }
 
-void View::markSelectedCell(sf::RenderWindow &window, std::string texture)
+void View::markCell(int num, std::string texture, int gridNum)
 {
-    grid.markSelectedCell(window, texture);
+    grids[gridNum].markCell(num, texture);
 }
 
-void View::markCell(int num, std::string texture)
-{
-    grid.markCell(num, texture);
-}
-
-void View::markEnemyCell(int num, std::string texture)
-{
-    enemyGrid.markCell(num, texture);
-}
 
 void View::createGrid(int x, int y, int size, int width, int height, std::string filename)
 {
+    Grid grid;
     grid.create(x, y, size, width, height, filename);
+    grids.push_back(grid);
 }
 
-void View::createEnemyGrid(int x, int y, int size, int width, int height, std::string filename)
-{
-    enemyGrid.create(x, y, size, width, height, filename);
-}
 
 void View::allignButton(sf::RenderWindow &window, int shift)
 {
@@ -132,8 +123,10 @@ void View::draw(sf::RenderWindow &window)
     {
         it.draw(window);
     }
-    grid.draw(window);
-    enemyGrid.draw(window);
+    for(auto it : grids)
+    {
+        it.draw(window);
+    }
 }
 
 void View::setButtonText(size_t numb, std::string text, size_t size, std::string font)

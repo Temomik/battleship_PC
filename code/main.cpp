@@ -8,6 +8,8 @@
 #include <ctime>
 #include <math.h>
 
+#define DELETE 59
+
 int stringSetNum = -1;
 int menuStringSet = -1;
 std::string inputString = "";
@@ -17,6 +19,7 @@ const int shipCount = 10;
 int ships[] = {1, 1, 1, 1, 2, 2, 2, 3, 3, 4};
 const int RadarPrice = 200,artilleryPrice = 300;
 int bonus[2] ={0,0};
+int waitForDraw = 0;
 
 enum menuNames
 {
@@ -53,12 +56,28 @@ std::string toString(int num)
     return std::string(buff);
 }
 
+bool isEndOfGame(std::vector<int>& data)
+{
+    bool isEndGameConditions;
+    int count = gridCount * gridCount;
+    for (size_t i = 0; i < count; i++)
+    {
+        if (data[i] == 1)
+        {
+            isEndGameConditions = false;
+            break;
+        }
+        isEndGameConditions = true;
+    }
+    return isEndGameConditions;
+}
+
 int findDirectionsShip(const std::vector<int>& ships,int num)
 {
     const int size = sqrt(ships.size());
-    if(num + 1 < ships.size() && (ships[num + 1] == 1 || ships[num + 1] == 3))
+    if(num + 1 < ships.size() && (ships[num + 1] == 1 || ships[num + 1] == 3) && num % size != size -1)
         return 1;
-    if(num - 1 >= 0 && (ships[num - 1] == 1 || ships[num - 1] == 3))
+    if(num - 1 >= 0 && (ships[num - 1] == 1 || ships[num - 1] == 3)&& num % size != 0)
         return -1;
     if(num + size < ships.size() && (ships[num + size] == 1 || ships[num + size] == 3))
         return size;
@@ -78,6 +97,7 @@ int findStartShipCord(const std::vector<int>& ships,int num)
 
 bool isShipAlive(const std::vector<int>& ships, int num)
 {   
+    int size = sqrt(ships.size());
     num = findStartShipCord(ships,num);
     int directions = findDirectionsShip(ships,num);
     if(directions == 0)
@@ -90,6 +110,10 @@ bool isShipAlive(const std::vector<int>& ships, int num)
     {
         if(ships[num] == 1)
             return false;
+            if((num % size == size- 1 && (num + directions) % size == 0) || (num % size == 0 && (num + directions) % size == size - 1))
+            {
+                break;
+            }
         num+=directions;
     }
     return true;
@@ -141,6 +165,78 @@ bool canPlaceShip(int deck, int cord, int gridCount, int rotate, std::vector<int
     return true;
 }
 
+bool makeShoot(int selectedCell, View& view, int gridNum)
+{
+    if(selectedCell < 0 && selectedCell >= view.getGridData(gridNum).size())
+    {
+        return true;
+    }
+    if (view.getGridData(gridNum)[selectedCell] == 0)
+    {
+        view.setGridData(selectedCell, 2,gridNum);
+        view.markCell(selectedCell, "image/water-.jpg",gridNum);
+        return false;
+    }
+    else if (view.getGridData(gridNum)[selectedCell] == 1)
+    {
+        view.setGridData(selectedCell, 3,gridNum);
+        view.markCell(selectedCell, "image/water=.jpg",gridNum);
+        if (isShipAlive(view.getGridData(gridNum), selectedCell))
+        {
+            std::vector<int> allShips = view.getGridData(gridNum);
+            int num = findStartShipCord(allShips, selectedCell);
+            int directions = findDirectionsShip(allShips, num);
+            for (; num >= 0 && num < allShips.size() && (allShips[num] == 1 || allShips[num] == 3); num += directions)
+            {
+                if ((num % gridCount == 0 && (num + directions) % gridCount == gridCount - 1) || (num % gridCount == gridCount - 1 && (num + directions) % gridCount == 0))
+                    break;
+                int maxX = 3, maxY = 3;
+                int tmpNum;
+                if (num >= 0 && num < allShips.size() && (allShips[num] == 1 || allShips[num] == 3))
+                {
+                    if (num % gridCount == 0)
+                    {
+                        maxX = 2;
+                        tmpNum = num - gridCount;
+                    }
+                    else
+                    {
+                        tmpNum = num - 1 - gridCount;
+                    }
+                    if (tmpNum < 0)
+                    {
+                        tmpNum += gridCount;
+                        maxY = 2;
+                    }
+                    for (int y = 0; y < maxY; tmpNum += gridCount, y++)
+                    {
+
+                        for (int x = 0; x < maxX; x++)
+                        {
+                            if (tmpNum + x >= 0 && tmpNum + x < allShips.size() && allShips[tmpNum + x] == 0)
+                            {
+                                view.setGridData(tmpNum + x, 2,gridNum);
+                                view.markCell(tmpNum + x, "image/water-.jpg",gridNum);
+                            }
+                            if ((tmpNum + x) % gridCount == gridCount - 1)
+                            {
+                                break;
+                            }
+                        }
+                    }
+                    if (directions == 0)
+                        break;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+    }
+    return true;
+}
+
 void setCharString(char *first, std::string second, int max)
 {
     if (max > second.size())
@@ -161,7 +257,7 @@ void cloneArray(int* first,const int* second,int size)
     }
 }
 
-void randomShipPlace(const int* ships,View& view)
+void randomShipPlace(const int* ships,View& view, bool vision, int gridNum)
 {
     int tmpShips[shipCount];
     cloneArray(tmpShips,ships,shipCount);
@@ -172,19 +268,21 @@ void randomShipPlace(const int* ships,View& view)
         {
             cord = rand() % 100;
             rotate = rand() % 2 - 1;
-            if (canPlaceShip(tmpShips[i], cord, gridCount, rotate, view.getGridData()))
+            if (canPlaceShip(tmpShips[i], cord, gridCount, rotate, view.getGridData(gridNum)))
                 break;
         }
         for (int j = 0; j < tmpShips[i]; j++)
             if (rotate == 0)
             {
-                view.markCell(cord + j, "image/water_.jpg");
-                view.setGridData(cord + j, 1);
-            }
+                if(vision)
+                    view.markCell(cord + j, "image/water_.jpg",gridNum);
+                view.setGridData(cord + j, 1,gridNum);
+           }
             else
             {
-                view.markCell(cord + j * gridCount, "image/water_.jpg");
-                view.setGridData(cord + j * gridCount, 1);
+                if(vision)
+                    view.markCell(cord + j * gridCount, "image/water_.jpg",gridNum);
+                view.setGridData(cord + j * gridCount, 1,gridNum);
             }
         tmpShips[i] = -1;
     }
@@ -200,6 +298,7 @@ View secondGameStageMenu("image/background.jpg");
 View startMenu("image/background.jpg");
 View mainMenu("image/background.jpg");
 View bonusMenu("image/background.jpg");
+View *Menu = &startMenu;
 sf::RenderWindow window(sf::VideoMode(1920, 1080), "BattleShip", sf::Style::Fullscreen);
 int rightMouseStatus = 0;
 int leftMouseStatus = 0;
@@ -208,15 +307,33 @@ int menuNum = startMenuEnum;
 Profiles profiles("saves");
 Profile currentUser = {"", "", 0, 0};
 
+void RadarAbility(View& view, int size, int cord, int gridNum)
+{   
+    size--;
+    for ( int i = -gridCount; i < size  * gridCount; i+=gridCount)
+    {
+        for(int j = -1; j < size; j++)
+        {   
+            if(cord+i+j >= 0 && cord+i+j < view.getGridData(gridNum).size())
+            {
+                if( view.getGridData(gridNum)[cord+i+j] == 1)
+                {
+                    secondGameStageMenu.markCell(cord+i+j, "image/water_.jpg",gridNum);
+                }
+            }   
+        }
+    }
+}
 
 void logicThread()
 {
+    srand(time(NULL));
     int lastCell = -1;
     int ccurrentShipDeck = 0;
     int rotate = 0;
-    std::stack<int> lastMenu;
     int startGameConditions = 0;
     int tmpShips[shipCount];
+    bool isEndGameConditions = false;
     while (1)
     {
 
@@ -231,14 +348,19 @@ void logicThread()
                 case 0:
                     for (size_t i = 0; i < gridCount * gridCount; i++)
                     {
-                        firstGameStageMenu.setGridData(i, 0);
-                        firstGameStageMenu.markCell( i, "image/water.jpg");
+                        if(firstGameStageMenu.getGridData(0)[i] != 0)
+                        {
+                            firstGameStageMenu.setGridData(i, 0, 0);
+                            firstGameStageMenu.markCell(i, "image/water.jpg",0);
+                        }
                     }
                     cloneArray(tmpShips,ships,shipCount);
                     menuNum = firstGameStageMenuEnum;
+                    Menu  = &firstGameStageMenu;
                     break;
                 case 1:
                     menuNum = rulesMenuEnum;
+                    Menu = &rulesMenu;
                     break;
                 case 2:
                     infoMenu.setButtonText(0, currentUser.login, 50, "font/consolaz.ttf");
@@ -246,6 +368,7 @@ void logicThread()
                     infoMenu.setButtonText(2, toString(currentUser.money), 50, "font/consolaz.ttf");
                     infoMenu.setButtonText(3, toString(currentUser.record), 50, "font/consolaz.ttf");
                     menuNum = infoMenuEnum;
+                    Menu = &infoMenu;
                     break;
                 case 3:
                     window.close();
@@ -261,24 +384,25 @@ void logicThread()
             if (rightMouseStatus == 1)
             {
                 rightMouseStatus = 0;
-                lastMenu.push(menuNum);
                 switch (buttonCount)
                 {
                 case 0:
                     menuNum = registerMenuEnum;
+                    Menu = &registerMenu;
                     break;
                 case 1:
                     menuNum = loginMenuEnum;
+                    Menu = &loginMenu;
                     break;
                 case 2:
                     currentUser.money = 6000;
                     menuNum = mainMenuEnum;
+                    Menu = &mainMenu;
                     break;
                 case 3:
                     window.close();
                     break;
                 default:
-                    lastMenu.pop();
                     break;
                 }
             }
@@ -306,6 +430,7 @@ void logicThread()
                     {
                         profiles.addProfile(currentUser);
                         menuNum = mainMenuEnum;
+                        Menu = &mainMenu;
                     }
                     else
                     {
@@ -316,10 +441,9 @@ void logicThread()
                     }
                     break;
                 case 3:
-                    if (!lastMenu.empty())
                     {
-                        menuNum = lastMenu.top();
-                        lastMenu.pop();
+                        menuNum = startMenuEnum;
+                        Menu = &startMenu;
                         stringSetNum = -1;
                     }
                     stringSetNum = -1;
@@ -352,6 +476,7 @@ void logicThread()
                         currentUser = profiles.getProfile(currentUser);
                         // currentUser.money = 6000;    
                         menuNum = mainMenuEnum;
+                        Menu = &mainMenu;
                     }
                     else
                     {
@@ -362,11 +487,9 @@ void logicThread()
                     }
                     break;
                 case 3:
-                    if (!lastMenu.empty())
                     {
                         menuNum = startMenuEnum;
-                        menuNum = lastMenu.top();
-                        lastMenu.pop();
+                        Menu = &startMenu;
                     }
                     stringSetNum = -1;
                     break;
@@ -378,12 +501,18 @@ void logicThread()
         else if (menuNum == rulesMenuEnum)
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
                 menuNum = mainMenuEnum;
+                Menu = &mainMenu;
+            }
         }
         else if (menuNum == infoMenuEnum)
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
                 menuNum = mainMenuEnum;
+                Menu = &mainMenu;
+            }
         }
         else if (menuNum == firstGameStageMenuEnum)
         {
@@ -394,6 +523,7 @@ void logicThread()
                 switch (buttonCount)
                 {
                 case 0:
+                    Menu = &shipSelectMenu;
                     menuNum = shipSelectMenuEnum;
                     break;
                 case 1:
@@ -402,14 +532,18 @@ void logicThread()
                 case 2:
                     bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
                     menuNum = bonusMenuEnum;
+                    Menu = &bonusMenu;
                     break;
                 case 3: 
                         for (size_t i = 0; i < gridCount * gridCount; i++)
                         {
-                            firstGameStageMenu.setGridData(i, 0);
-                            firstGameStageMenu.markCell( i, "image/water.jpg");
+                            if(firstGameStageMenu.getGridData(0)[i] != 0)
+                            {
+                                firstGameStageMenu.setGridData(i, 0,0);
+                                firstGameStageMenu.markCell( i, "image/water.jpg",0);
+                            }
                         }
-                        randomShipPlace(ships,firstGameStageMenu);
+                        randomShipPlace(ships,firstGameStageMenu,true,0);
                         startGameConditions = true;
                     break;
                 case 4:
@@ -427,29 +561,37 @@ void logicThread()
                     }
                     if(startGameConditions == true)
                     {
-                        secondGameStageMenu.setEnemyGridData(firstGameStageMenu.getGridData());
+                        secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0),1);
                         
                         for (int i = 0; i < shipCount*shipCount;i++)
                         {
-                            if(firstGameStageMenu.getGridData()[i] == 1)
+                            if(firstGameStageMenu.getGridData(0)[i] != 0)
                             {   
-                                secondGameStageMenu.markEnemyCell( i,"image/water_.jpg");
+                                secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0),1);
+                                secondGameStageMenu.markCell( i,"image/water_.jpg",1);
+                            }
+                            if(secondGameStageMenu.getGridData(1)[i] != 0)
+                            {
+                                secondGameStageMenu.setGridData(i,0,1);
+                                secondGameStageMenu.markCell( i,"image/water.jpg",0);
                             }
                         }
-                        randomShipPlace(ships,secondGameStageMenu);
+                        randomShipPlace(ships,secondGameStageMenu,true  ,0);
                         secondGameStageMenu.setButtonText(0, "Radar " + toString(bonus[0]), 50, "font/consolaz.ttf");
                         secondGameStageMenu.setButtonText(1, "Artillery " + toString(bonus[1]), 50, "font/consolaz.ttf");
                         menuNum = secondGameStageMenuEnum;
+                        Menu = &secondGameStageMenu;
                     }
                     break;
                 case 5:
+                    Menu = &mainMenu;
                     menuNum = mainMenuEnum;
                     break;
                 default:
                     break;
                 }
-                int tmp = firstGameStageMenu.getSelectedCell(window);
-                if (tmp >= 0 && canPlaceShip(ccurrentShipDeck, tmp, gridCount, rotate, firstGameStageMenu.getGridData()))
+                int tmp = firstGameStageMenu.getSelectedCell(window,0);
+                if (tmp >= 0 && canPlaceShip(ccurrentShipDeck, tmp, gridCount, rotate, firstGameStageMenu.getGridData(0)))
                 {
                     bool isShipAmount = false;
                     for (int i = 0; i < shipCount; i++)
@@ -466,13 +608,13 @@ void logicThread()
                         {
                             if (rotate == 0)
                             {
-                                firstGameStageMenu.markCell( tmp + i, "image/water_.jpg");
-                                firstGameStageMenu.setGridData(tmp + i, 1);
+                                firstGameStageMenu.markCell( tmp + i, "image/water_.jpg",0);
+                                firstGameStageMenu.setGridData(tmp + i, 1,0);
                             }
                             else
                             {
-                                firstGameStageMenu.markCell( tmp + i * gridCount, "image/water_.jpg");
-                                firstGameStageMenu.setGridData(tmp + i * gridCount, 1);
+                                firstGameStageMenu.markCell( tmp + i * gridCount, "image/water_.jpg",0);
+                                firstGameStageMenu.setGridData(tmp + i * gridCount, 1,0);
                             }
                         }
                 }
@@ -481,13 +623,17 @@ void logicThread()
         else if (menuNum == shipSelectMenuEnum)
         {
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+            {
                 menuNum = firstGameStageMenuEnum;
+                Menu = &firstGameStageMenu;
+            }
             int buttonCount = shipSelectMenu.getSelectedButton(window);
             if (rightMouseStatus == 1)
             {
                 rightMouseStatus = 0;
                 ccurrentShipDeck = buttonCount + 1;
                 menuNum = firstGameStageMenuEnum;
+                Menu = &firstGameStageMenu;
             }
         } else if(menuNum == bonusMenuEnum)
         {
@@ -518,81 +664,123 @@ void logicThread()
                         break;
                     case 3:
                         menuNum = firstGameStageMenuEnum;
+                        Menu = &firstGameStageMenu;
                         break;
                 }
             }
         }else if(menuNum == secondGameStageMenuEnum)
         {
-            bool isEndGameConditions = false;
-            int bonusNumberChoosed = 0;
+            int bonusNumberChoosed = -1;
             int isMyStep = true;
+            std::stack<int> lastShipsCord;
             while(!isEndGameConditions){
                 int buttonCount = secondGameStageMenu.getSelectedButton(window);
+                int selectedCell = secondGameStageMenu.getSelectedCell(window, 0);
                 if (rightMouseStatus == 1 && buttonCount >= 0)
                 {
                     rightMouseStatus = 0;
                     switch (buttonCount)
                     {
                     case 0:
+                        if(bonus[0] != 0)
+                        {
+                            bonusNumberChoosed = 0;
+                            secondGameStageMenu.setButtonText(3,"Radar",50,"font/consolaz.ttf");
+                        }
                         break;
                     case 1:
+                        if(bonus[1] != 0)
+                        {
+                            bonusNumberChoosed = 1;
+                            secondGameStageMenu.setButtonText(3,"Artillery",50,"font/consolaz.ttf");
+                        }
                         break;
                     case 2:
                         currentUser.money = bonus[0] * RadarPrice + bonus[1] * RadarPrice;
                         menuNum = mainMenuEnum;
+                        Menu = &mainMenu;
                         isEndGameConditions = true;
                         break;
                     default:
                         break;
                     }
-                }
-                
-                int selectedCell = secondGameStageMenu.getSelectedCell(window);
-                if(selectedCell >= 0)
+                } else if (rightMouseStatus == 1 && isMyStep == true && selectedCell >= 0)
                 {
-                    if(rightMouseStatus == 1)
+                    if(bonusNumberChoosed >= 0 )
                     {
                         rightMouseStatus = 0;
-                        if(secondGameStageMenu.getGridData()[selectedCell] == 0)
+                        bonus[bonusNumberChoosed] = 0;
+                        RadarAbility(secondGameStageMenu,3,selectedCell,0);
+                    } else
+                    {
+                        rightMouseStatus = 0;
+                        waitForDraw = 1;
+                        if (!makeShoot(selectedCell, secondGameStageMenu, 0))
                         {
-                            secondGameStageMenu.setGridData(selectedCell,2);
-                            secondGameStageMenu.markCell(selectedCell,"image/water-.jpg");
-                        } else if(secondGameStageMenu.getGridData()[selectedCell] == 1)
-                        {
-                            secondGameStageMenu.setGridData(selectedCell,3);
-                            secondGameStageMenu.markCell(selectedCell,"image/water=.jpg");
-                            if(isShipAlive(secondGameStageMenu.getGridData(),selectedCell))
-                            {
-                                std::vector<int> allShips = secondGameStageMenu.getGridData();
-                                int num = findStartShipCord(allShips,selectedCell);
-                                int directions = findDirectionsShip(allShips,num);
-                                std::cout << num << std::endl;
-                                for(;;num += directions)
-                                {   
-                                    if(num >= 0 && num < allShips.size() && (allShips[num] == 1 || allShips[num] == 3))
-                                    {
-                                        int tmpNum = num-1-gridCount;
-                                        for (int y = 0; y < 3; tmpNum += gridCount - 3,y++)
-                                        {
-                                            for (int x = 0; x < 3; tmpNum += 1, x++)
-                                            {
-                                                if(tmpNum >=0 && tmpNum < allShips.size() && allShips[tmpNum] == 0)
-                                                {
-                                                    secondGameStageMenu.setGridData(selectedCell, 2);
-                                                    secondGameStageMenu.markCell(selectedCell, "image/water-.jpg");
-                                                }
-                                            }
-                                        }
-                                    } else
-                                    {
-                                        break;
-                                    }
-                                }
-                            }
+                            isMyStep = false;
+                            secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
+                            secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
                         }
+                        if(!isShipAlive(secondGameStageMenu.getGridData(0),selectedCell))
+                        {   
+                            isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(0));
+                        }
+                        waitForDraw = 0;
                     }
+                    
+                }
+                else
+                {
+                    rightMouseStatus = 0;
+                }
+                if (isMyStep == false)
+                {
+                    _sleep(300);
+                    int cord;
+                    if(lastShipsCord.size() > 0)
+                    {
+                        cord = lastShipsCord.top();
+                        lastShipsCord.pop();
+                    } else
+                    {
+                        int max = gridCount*gridCount;
+                        do
+                        {
+                            cord = rand() % max;
+                        }while(secondGameStageMenu.getGridData(1)[cord] == 2 ||secondGameStageMenu.getGridData(1)[cord] == 3);
+                    }
+                    std::cout << lastShipsCord.size() << " " << cord << std::endl;
+                    if(cord >= 0 && cord < secondGameStageMenu.getGridData(1).size() && secondGameStageMenu.getGridData(1)[cord] == 1)
+                        {
+                        if(cord + 1 < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord+1] == 0 || secondGameStageMenu.getGridData(1)[cord+1] ==  1))
+                            lastShipsCord.push(cord+1);
+                        if(cord - 1 >= 0 && (secondGameStageMenu.getGridData(1)[cord-1] == 0 || secondGameStageMenu.getGridData(1)[cord-1] == 1))
+                            lastShipsCord.push(cord - 1);
+                        if(cord + gridCount < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord+gridCount] == 0 || secondGameStageMenu.getGridData(1)[cord+gridCount] == 1))
+                            lastShipsCord.push(cord + gridCount);
+                        if(cord - gridCount >= 0 && (secondGameStageMenu.getGridData(1)[cord-gridCount] == 0 || secondGameStageMenu.getGridData(1)[cord-gridCount] == 1))
+                            lastShipsCord.push(cord - gridCount);
+                    }
+                    waitForDraw = 1;    
+                    if(!makeShoot(cord, secondGameStageMenu, 1))
+                    {
+                        if(!isShipAlive(secondGameStageMenu.getGridData(1),cord) && secondGameStageMenu.getGridData(1)[cord] == 3)
+                        {
+                            while (lastShipsCord.size() > 0)
+                            {
+                                lastShipsCord.pop();
+                            }           
+                            isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(1));
+                        }
+                        isMyStep = true;
+                        secondGameStageMenu.setButtonText(3, "You turn", 50, "font/consolaz.ttf");
+                        secondGameStageMenu.setButtonSprite(3, "image/green.jpg");
+                    }
+                    waitForDraw = 0;
                 }
             }
+            secondGameStageMenu.setButtonText(3, "You kek", 50, "font/consolaz.ttf");
+            _sleep(4000);
         }
     }
 }
@@ -608,7 +796,7 @@ void inputStream()
                 int code = event.text.unicode;
                 if (code < 255)
                 {
-                    if (code == 59)
+                    if (code == DELETE)
                     {
                         if (inputString.size() > 0)
                             inputString = inputString.substr(0, inputString.size() - 1);
@@ -626,7 +814,6 @@ int main()
     sf::Thread input(&inputStream), logic(&logicThread);
     logic.launch();
     input.launch();
-    srand(time(0));
 
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Start Game", 50, "font/consolaz.ttf");
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Rules", 50, "font/consolaz.ttf");
@@ -680,10 +867,11 @@ int main()
     bonusMenu.allignButton(window,0);
 
     secondGameStageMenu.createGrid(20, 20, 90, gridCount, gridCount, "image/water.jpg");
-    secondGameStageMenu.createEnemyGrid(1600, 20, 30, gridCount, gridCount, "image/water.jpg");
+    secondGameStageMenu.createGrid(1600, 20, 30, gridCount, gridCount, "image/water.jpg");
     secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Radar", 50, "font/consolaz.ttf");
     secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Artillery", 50, "font/consolaz.ttf");
     secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
+    secondGameStageMenu.addButton(0, 0, 300, 100, "image/green.jpg", "You turn", 50, "font/consolaz.ttf");
     secondGameStageMenu.allignButton(window, 300);
 
     window.setFramerateLimit(90);
@@ -727,28 +915,32 @@ int main()
             middleMouseStatus = 1;
         }
 
-        window.clear();
-        if (menuNum == mainMenuEnum)
-            mainMenu.draw(window);
-        if (menuNum == startMenuEnum)
-            startMenu.draw(window);
-        if (menuNum == registerMenuEnum)
-            registerMenu.draw(window);
-        if (menuNum == loginMenuEnum)
-            loginMenu.draw(window);
-        if (menuNum == rulesMenuEnum)
-            rulesMenu.draw(window);
-        if (menuNum == infoMenuEnum)
-            infoMenu.draw(window);
-        if (menuNum == firstGameStageMenuEnum)
-            firstGameStageMenu.draw(window);
-        if (menuNum == shipSelectMenuEnum)
-            shipSelectMenu.draw(window);
-        if (menuNum == bonusMenuEnum)
-            bonusMenu.draw(window);
-        if (menuNum == secondGameStageMenuEnum)
-            secondGameStageMenu.draw(window);
-        window.display();
+        if (waitForDraw == 0)
+        {
+            window.clear();
+            Menu->draw(window);
+            // if (menuNum == mainMenuEnum)
+            //     mainMenu.draw(window);
+            // if (menuNum == startMenuEnum)
+            //     startMenu.draw(window);
+            // if (menuNum == registerMenuEnum)
+            //     registerMenu.draw(window);
+            // if (menuNum == loginMenuEnum)
+            //     loginMenu.draw(window);
+            // if (menuNum == rulesMenuEnum)
+            //     rulesMenu.draw(window);
+            // if (menuNum == infoMenuEnum)
+            //     infoMenu.draw(window);
+            // if (menuNum == firstGameStageMenuEnum)
+            //     firstGameStageMenu.draw(window);
+            // if (menuNum == shipSelectMenuEnum)
+            //     shipSelectMenu.draw(window);
+            // if (menuNum == bonusMenuEnum)
+            //     bonusMenu.draw(window);
+            // if (menuNum == secondGameStageMenuEnum)
+            //     secondGameStageMenu.draw(window);
+            window.display();
+        }
     }
 
     input.terminate();

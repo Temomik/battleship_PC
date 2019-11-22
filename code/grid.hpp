@@ -11,6 +11,7 @@ private:
 public:
     Grid(){};
     Grid(int x,int y,int size,int width,int height,std::string filename);
+    Grid(const Grid& grid);
     void create(int x,int y,int size,int width,int height,std::string filename);
     void draw(sf::RenderWindow& window);
     int getSelectedCell(sf::RenderWindow& window);
@@ -36,6 +37,12 @@ Grid::Grid(int x,int y,int size,int width,int height, std::string filename)
     //     }
     //     y += size;
     // }
+}
+
+Grid::Grid(const Grid& grid)
+{
+    this->data = grid.data;
+    this->buttons = grid.buttons;
 }
 
 std::vector<Button>& Grid::getGrid()
