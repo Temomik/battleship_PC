@@ -20,20 +20,23 @@ int ships[] = {1, 1, 1, 1, 2, 2, 2, 3, 3, 4};
 const int RadarPrice = 200,artilleryPrice = 300;
 int bonus[2] ={0,0};
 int waitForDraw = 0;
+int startGameConditions = 0;
+int rotate = 0;
+int currentShipDeck = 0;
 
-enum menuNames
-{
-    loginMenuEnum,
-    registerMenuEnum,
-    mainMenuEnum,
-    infoMenuEnum,
-    rulesMenuEnum,
-    firstGameStageMenuEnum,
-    secondGameStageMenuEnum,
-    shipSelectMenuEnum,
-    startMenuEnum,
-    bonusMenuEnum
-};
+// enum menuNames
+// {
+//     loginMenuEnum,
+//     registerMenuEnum,
+//     mainMenuEnum,
+//     infoMenuEnum,
+//     rulesMenuEnum,
+//     firstGameStageMenuEnum,
+//     secondGameStageMenuEnum,
+//     shipSelectMenuEnum,
+//     startMenuEnum,
+//     bonusMenuEnum
+// };
 
 int toAnsi(int code)
 {
@@ -93,16 +96,16 @@ int findStartShipCord(const std::vector<int>& ships,int num)
         return num;
     for(; num < ships.size() && num >= 0 && ( ships[num] == 1 || ships[num] == 3); num += directions);
     return num -= directions;
-}   
+}
 
 bool isShipAlive(const std::vector<int>& ships, int num)
-{   
+{
     int size = sqrt(ships.size());
     num = findStartShipCord(ships,num);
     int directions = findDirectionsShip(ships,num);
     if(directions == 0)
     {
-        if(ships[num] == 1) 
+        if(ships[num] == 1)
             return false;
         return true;
     }
@@ -303,25 +306,490 @@ sf::RenderWindow window(sf::VideoMode(1920, 1080), "BattleShip", sf::Style::Full
 int rightMouseStatus = 0;
 int leftMouseStatus = 0;
 int middleMouseStatus = 0;
-int menuNum = startMenuEnum;
 Profiles profiles("saves");
 Profile currentUser = {"", "", 0, 0};
 
 void RadarAbility(View& view, int size, int cord, int gridNum)
-{   
+{
     size--;
     for ( int i = -gridCount; i < size  * gridCount; i+=gridCount)
     {
         for(int j = -1; j < size; j++)
-        {   
+        {
             if(cord+i+j >= 0 && cord+i+j < view.getGridData(gridNum).size())
             {
                 if( view.getGridData(gridNum)[cord+i+j] == 1)
                 {
                     secondGameStageMenu.markCell(cord+i+j, "image/water_.jpg",gridNum);
                 }
-            }   
+            }
         }
+    }
+}
+int handleButtonShipArray[shipCount];
+void mainStartButton()
+{
+    cloneArray(handleButtonShipArray,ships,shipCount);
+    int tmpShips[shipCount];
+    for (size_t i = 0; i < gridCount * gridCount; i++)
+    {
+        if(firstGameStageMenu.getGridData(0)[i] != 0)
+        {
+            firstGameStageMenu.setGridData(i, 0, 0);
+            firstGameStageMenu.markCell(i, "image/water.jpg",0);
+        }
+    }
+    cloneArray(tmpShips,ships,shipCount);
+    Menu  = &firstGameStageMenu;
+}
+
+void mainRulesButton()
+{
+    Menu = &rulesMenu;
+}
+
+void mainQuitButton()
+{
+    window.close();
+}
+
+void mainInfoButton()
+{
+    infoMenu.setButtonText(0, currentUser.login, 50, "font/consolaz.ttf");
+    infoMenu.setButtonText(1, currentUser.password, 50, "font/consolaz.ttf");
+    infoMenu.setButtonText(2, toString(currentUser.money), 50, "font/consolaz.ttf");
+    infoMenu.setButtonText(3, toString(currentUser.record), 50, "font/consolaz.ttf");
+    Menu = &infoMenu;
+}
+
+void startRegisterButton()
+{
+
+    Menu = &registerMenu;
+}
+void startLoginButton()
+{
+
+    Menu = &loginMenu;
+}
+void startUnauthorizedButton()
+{
+    currentUser.money = 6000;
+    Menu = &mainMenu;
+}
+
+void startQuitButton()
+{
+    window.close();
+}
+
+void registerLoginFieldButton()
+{
+    inputString = currentUser.login;
+    stringSetNum = 2;
+}
+
+void registerPasswordFiledButton()
+{
+    inputString = currentUser.password;
+    stringSetNum = 3;
+}
+
+void registerRegisterButton()
+{
+    stringSetNum = -1;
+    if (strlen(currentUser.login) > 0 && strlen(currentUser.password) > 0 && !profiles.isConsistLogin(currentUser))
+    {
+        profiles.addProfile(currentUser);
+        Menu = &mainMenu;
+    }
+    else
+    {
+        setCharString(currentUser.login, "", MAX_STRINGN);
+        setCharString(currentUser.password, "", MAX_STRINGN);
+        registerMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
+        registerMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
+    }
+}
+
+void registerBackButton()
+{
+    {
+        Menu = &startMenu;
+        stringSetNum = -1;
+    }
+    stringSetNum = -1;
+}
+
+void loginLoginFieldButton()
+{
+    inputString = currentUser.login;
+    stringSetNum = 0;
+}
+
+void loginPasswordFieldButton()
+{
+    inputString = currentUser.password;
+    stringSetNum = 1;
+}
+
+void loginLoginButton()
+{
+    stringSetNum = -1;
+    if (profiles.isConsistProfile(currentUser))
+    {
+        currentUser = profiles.getProfile(currentUser);
+        // currentUser.money = 6000;
+        Menu = &mainMenu;
+    }
+    else
+    {
+        setCharString(currentUser.login, "", MAX_STRINGN);
+        setCharString(currentUser.password, "", MAX_STRINGN);
+        loginMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
+        loginMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
+    }
+}
+
+void loginBackButton()
+{
+    {
+        Menu = &startMenu;
+    }
+    stringSetNum = -1;
+}
+
+void firstGameStageShipsButton()
+{
+    Menu = &shipSelectMenu;
+}
+void firstGameStageRotateButton()
+{
+    rotate ^= 1;
+}
+void firstGameStageBonusButton()
+{
+    bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
+    Menu = &bonusMenu;
+}
+void firstGameStageRandomButton()
+{
+    for (size_t i = 0; i < gridCount * gridCount; i++)
+    {
+        if (firstGameStageMenu.getGridData(0)[i] != 0)
+        {
+            firstGameStageMenu.setGridData(i, 0, 0);
+            firstGameStageMenu.markCell(i, "image/water.jpg", 0);
+        }
+    }
+    randomShipPlace(ships, firstGameStageMenu, true, 0);
+    startGameConditions = true;
+}
+void firstGameStageStartButton()
+{
+    int tmpShips[shipCount];
+    cloneArray(tmpShips,ships,shipCount);
+    if (startGameConditions == false)
+    {
+        startGameConditions = true;
+        for (int i = 0; i < shipCount; i++)
+        {
+            if (tmpShips[i] > 0)
+            {
+                startGameConditions = false;
+                break;
+            }
+        }
+    }
+    if (startGameConditions == true)
+    {
+        secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0), 1);
+
+        for (int i = 0; i < shipCount * shipCount; i++)
+        {
+            if (firstGameStageMenu.getGridData(0)[i] != 0)
+            {
+                secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0), 1);
+                secondGameStageMenu.markCell(i, "image/water_.jpg", 1);
+            }
+            if (secondGameStageMenu.getGridData(1)[i] != 0)
+            {
+                secondGameStageMenu.setGridData(i, 0, 1);
+                secondGameStageMenu.markCell(i, "image/water.jpg", 0);
+            }
+        }
+        randomShipPlace(ships, secondGameStageMenu, false, 0);
+        secondGameStageMenu.setButtonText(0, "Radar " + toString(bonus[0]), 50, "font/consolaz.ttf");
+        secondGameStageMenu.setButtonText(1, "Artillery " + toString(bonus[1]), 50, "font/consolaz.ttf");
+        Menu = &secondGameStageMenu;
+    }
+}
+void firstGameStageBackButton()
+{
+    Menu = &mainMenu;
+}
+
+void firstGameStageOperation()
+{
+    startGameConditions = true;
+    for (size_t i = 0; i < shipCount; i++)
+    {
+        if(handleButtonShipArray[i] > 0)
+        {
+            startGameConditions = false;
+            break;
+        }
+    }
+    if(startGameConditions == true)
+    {
+        return;
+    }
+    
+    int buttonCount = firstGameStageMenu.getSelectedButton(window);
+    if (rightMouseStatus == 1)
+    {
+        rightMouseStatus = 0;
+        switch (buttonCount)
+        {
+
+            break;
+        default:
+            break;
+        }
+        int tmp = firstGameStageMenu.getSelectedCell(window, 0);
+        if (tmp >= 0 && canPlaceShip(currentShipDeck, tmp, gridCount, rotate, firstGameStageMenu.getGridData(0)))
+        {
+            bool isShipAmount = false;
+            for (int i = 0; i < shipCount; i++)
+            {
+                if (handleButtonShipArray[i] == currentShipDeck)
+                {
+                    handleButtonShipArray[i] = -1;
+                    isShipAmount = true;
+                    break;
+                }
+            }
+            if (isShipAmount)
+                for (int i = 0; i < currentShipDeck; i++)
+                {
+                    if (rotate == 0)
+                    {
+                        firstGameStageMenu.markCell(tmp + i, "image/water_.jpg", 0);
+                        firstGameStageMenu.setGridData(tmp + i, 1, 0);
+                    }
+                    else
+                    {
+                        firstGameStageMenu.markCell(tmp + i * gridCount, "image/water_.jpg", 0);
+                        firstGameStageMenu.setGridData(tmp + i * gridCount, 1, 0);
+                    }
+                }
+        }
+    }
+}
+
+void shipSelectOneButton()
+{
+    currentShipDeck =  1;
+    Menu = &firstGameStageMenu;
+}
+
+void shipSelectTwoButton()
+{
+    currentShipDeck =  2;
+    Menu = &firstGameStageMenu;
+}
+
+void shipSelectThreeButton()
+{
+    currentShipDeck =  3;
+    Menu = &firstGameStageMenu;
+}
+
+void shipSelectFourButton()
+{
+    currentShipDeck =  4;
+    Menu = &firstGameStageMenu;
+}
+
+void shipSelectOperation()
+{   
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+    {
+        Menu = &firstGameStageMenu;
+    }
+    // int buttonCount = shipSelectMenu.getSelectedButton(window);
+    // if (rightMouseStatus == 1)
+    // {
+    //     rightMouseStatus = 0;
+    //     currentShipDeck =  buttonCount + 1;
+    //     Menu = &firstGameStageMenu;
+    // }
+    // std::cout << currentShipDeck << std::endl;
+}
+
+void bonusRadarButton()
+{
+
+    if (currentUser.money > RadarPrice && bonus[0] == 0)
+    {
+        bonus[0] = 1;
+        currentUser.money -= RadarPrice;
+        bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
+    }
+}
+
+void bonusArtilleryButton()
+{
+    if (currentUser.money > artilleryPrice && bonus[1] == 0)
+    {
+        bonus[1] = 1;
+        currentUser.money -= artilleryPrice;
+        bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
+    }
+}
+
+void bonusBackButton()
+{
+
+    Menu = &firstGameStageMenu;
+}
+
+int bonusNumberChoosed = -1;
+int isMyStep = true;
+bool isEndGameConditions = false;
+
+void secondGameStageRadarButton()
+{
+    if (bonus[0] != 0)
+    {
+        bonus[0] = 0;
+        bonusNumberChoosed = 0;
+        secondGameStageMenu.setButtonText(3, "Radar", 50, "font/consolaz.ttf");
+        secondGameStageMenu.setButtonText(0, "Radar 0", 50, "font/consolaz.ttf");
+    }
+}
+
+void secondGameStageArtilleryButton()
+{
+    if (bonus[1] != 0)
+    {
+        bonusNumberChoosed = 1;
+        secondGameStageMenu.setButtonText(3, "Artillery", 50, "font/consolaz.ttf");
+    }
+}
+
+void secondGameStageBackButton()
+{
+    currentUser.money = bonus[0] * RadarPrice + bonus[1] * RadarPrice;
+    Menu = &mainMenu;
+    isEndGameConditions = true;
+}
+
+void secondGameStageOperation()
+{
+    static std::stack<int> lastShipsCord;
+    if (!isEndGameConditions)
+    {
+        int selectedCell = secondGameStageMenu.getSelectedCell(window, 0);
+        if (rightMouseStatus == 1 && isMyStep == true && selectedCell >= 0)
+        {
+            if (bonusNumberChoosed >= 0)
+            {
+                rightMouseStatus = 0;
+                bonus[bonusNumberChoosed] = 0;
+                RadarAbility(secondGameStageMenu, 3, selectedCell, 0);
+                bonusNumberChoosed = -1;
+                secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
+                secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
+                isMyStep = false;
+            }
+            else
+            {
+                rightMouseStatus = 0;
+                waitForDraw = 1;
+                if (!makeShoot(selectedCell, secondGameStageMenu, 0))
+                {
+                    std::cout << "makeshoot" << std::endl;
+                    isMyStep = false;
+                    secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
+                    secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
+                }
+                if (!isShipAlive(secondGameStageMenu.getGridData(0), selectedCell))
+                {
+                    std::cout << "kill Ship" << std::endl;
+                    isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(0));
+                }
+                waitForDraw = 0;
+            }
+        }
+        else
+        {
+            rightMouseStatus = 0;
+        }
+        if (isMyStep == false)
+        {
+            _sleep(300);
+            int cord;
+            if (lastShipsCord.size() > 0)
+            {
+                cord = lastShipsCord.top();
+                lastShipsCord.pop();
+            }
+            else
+            {
+                int max = gridCount * gridCount;
+                do
+                {
+                    cord = rand() % max;
+                } while (secondGameStageMenu.getGridData(1)[cord] == 2 || secondGameStageMenu.getGridData(1)[cord] == 3);
+            }
+            std::cout << lastShipsCord.size() << " " << cord << std::endl;
+            if (cord >= 0 && cord < secondGameStageMenu.getGridData(1).size() && secondGameStageMenu.getGridData(1)[cord] == 1)
+            {
+                if (cord + 1 < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord + 1] == 0 || secondGameStageMenu.getGridData(1)[cord + 1] == 1))
+                    lastShipsCord.push(cord + 1);
+                if (cord - 1 >= 0 && (secondGameStageMenu.getGridData(1)[cord - 1] == 0 || secondGameStageMenu.getGridData(1)[cord - 1] == 1))
+                    lastShipsCord.push(cord - 1);
+                if (cord + gridCount < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord + gridCount] == 0 || secondGameStageMenu.getGridData(1)[cord + gridCount] == 1))
+                    lastShipsCord.push(cord + gridCount);
+                if (cord - gridCount >= 0 && (secondGameStageMenu.getGridData(1)[cord - gridCount] == 0 || secondGameStageMenu.getGridData(1)[cord - gridCount] == 1))
+                    lastShipsCord.push(cord - gridCount);
+            }
+            if (!makeShoot(cord, secondGameStageMenu, 1))
+            {
+                if (!isShipAlive(secondGameStageMenu.getGridData(1), cord) && secondGameStageMenu.getGridData(1)[cord] == 3)
+                {
+                    while (lastShipsCord.size() > 0)
+                    {
+                        lastShipsCord.pop();
+                    }
+                    isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(1));
+                }
+                isMyStep = true;
+                secondGameStageMenu.setButtonText(3, "You turn", 50, "font/consolaz.ttf");
+                secondGameStageMenu.setButtonSprite(3, "image/green.jpg");
+            }
+        }
+    } else
+    {
+        std::cout << "end Game" << std::endl;
+        secondGameStageMenu.setButtonText(3, "You kek", 50, "font/consolaz.ttf");
+        _sleep(4000);
+    }
+}
+
+void rulesViewOperation()
+{
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+    {
+        Menu = &mainMenu;
+    }
+}
+void infoViewOperation()
+{
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+    {
+        Menu = &mainMenu;
     }
 }
 
@@ -329,459 +797,21 @@ void logicThread()
 {
     srand(time(NULL));
     int lastCell = -1;
-    int ccurrentShipDeck = 0;
-    int rotate = 0;
-    int startGameConditions = 0;
     int tmpShips[shipCount];
-    bool isEndGameConditions = false;
     while (1)
     {
 
-        if (menuNum == mainMenuEnum)
+        int buttonNum = Menu->getSelectedButton(window);
+        if (rightMouseStatus == 1 && buttonNum >= 0)
         {
-            int buttonCount = mainMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
-                {
-                case 0:
-                    for (size_t i = 0; i < gridCount * gridCount; i++)
-                    {
-                        if(firstGameStageMenu.getGridData(0)[i] != 0)
-                        {
-                            firstGameStageMenu.setGridData(i, 0, 0);
-                            firstGameStageMenu.markCell(i, "image/water.jpg",0);
-                        }
-                    }
-                    cloneArray(tmpShips,ships,shipCount);
-                    menuNum = firstGameStageMenuEnum;
-                    Menu  = &firstGameStageMenu;
-                    break;
-                case 1:
-                    menuNum = rulesMenuEnum;
-                    Menu = &rulesMenu;
-                    break;
-                case 2:
-                    infoMenu.setButtonText(0, currentUser.login, 50, "font/consolaz.ttf");
-                    infoMenu.setButtonText(1, currentUser.password, 50, "font/consolaz.ttf");
-                    infoMenu.setButtonText(2, toString(currentUser.money), 50, "font/consolaz.ttf");
-                    infoMenu.setButtonText(3, toString(currentUser.record), 50, "font/consolaz.ttf");
-                    menuNum = infoMenuEnum;
-                    Menu = &infoMenu;
-                    break;
-                case 3:
-                    window.close();
-                    break;
-                default:
-                    break;
-                }
-            }
+            rightMouseStatus = 0;
+            Menu->doOperations(buttonNum);
+        } else
+        {
+            Menu->doViewOperation();
+            rightMouseStatus = 0;
         }
-        else if (menuNum == startMenuEnum)
-        {
-            int buttonCount = startMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
-                {
-                case 0:
-                    menuNum = registerMenuEnum;
-                    Menu = &registerMenu;
-                    break;
-                case 1:
-                    menuNum = loginMenuEnum;
-                    Menu = &loginMenu;
-                    break;
-                case 2:
-                    currentUser.money = 6000;
-                    menuNum = mainMenuEnum;
-                    Menu = &mainMenu;
-                    break;
-                case 3:
-                    window.close();
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-        else if (menuNum == registerMenuEnum)
-        {
-            int buttonCount = registerMenu.getSelectedButton(window);
-
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
-                {
-                case 0:
-                    inputString = currentUser.login;
-                    stringSetNum = 2;
-                    break;
-                case 1:
-                    inputString = currentUser.password;
-                    stringSetNum = 3;
-                    break;
-                case 2:
-                    stringSetNum = -1;
-                    if (strlen(currentUser.login) > 0 && strlen(currentUser.password) > 0 && !profiles.isConsistLogin(currentUser))
-                    {
-                        profiles.addProfile(currentUser);
-                        menuNum = mainMenuEnum;
-                        Menu = &mainMenu;
-                    }
-                    else
-                    {
-                        setCharString(currentUser.login, "", MAX_STRINGN);
-                        setCharString(currentUser.password, "", MAX_STRINGN);
-                        registerMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
-                        registerMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
-                    }
-                    break;
-                case 3:
-                    {
-                        menuNum = startMenuEnum;
-                        Menu = &startMenu;
-                        stringSetNum = -1;
-                    }
-                    stringSetNum = -1;
-                    break;
-                default:
-                    break;
-                }
-            }
-        }
-        else if (menuNum == loginMenuEnum)
-        {
-            int buttonCount = loginMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
-                {
-                case 0:
-                    inputString = currentUser.login;
-                    stringSetNum = 0;
-                    break;
-                case 1:
-                    inputString = currentUser.password;
-                    stringSetNum = 1;
-                    break;
-                case 2:
-                    stringSetNum = -1;
-                    if (profiles.isConsistProfile(currentUser))
-                    {
-                        currentUser = profiles.getProfile(currentUser);
-                        // currentUser.money = 6000;    
-                        menuNum = mainMenuEnum;
-                        Menu = &mainMenu;
-                    }
-                    else
-                    {
-                        setCharString(currentUser.login, "", MAX_STRINGN);
-                        setCharString(currentUser.password, "", MAX_STRINGN);
-                        loginMenu.setButtonText(0, "", 50, "font/consolaz.ttf");
-                        loginMenu.setButtonText(1, "", 50, "font/consolaz.ttf");
-                    }
-                    break;
-                case 3:
-                    {
-                        menuNum = startMenuEnum;
-                        Menu = &startMenu;
-                    }
-                    stringSetNum = -1;
-                    break;
-                default:
-                    break;
-                }
-            }   
-        }
-        else if (menuNum == rulesMenuEnum)
-        {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-            {
-                menuNum = mainMenuEnum;
-                Menu = &mainMenu;
-            }
-        }
-        else if (menuNum == infoMenuEnum)
-        {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-            {
-                menuNum = mainMenuEnum;
-                Menu = &mainMenu;
-            }
-        }
-        else if (menuNum == firstGameStageMenuEnum)
-        {
-            int buttonCount = firstGameStageMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
-                {
-                case 0:
-                    Menu = &shipSelectMenu;
-                    menuNum = shipSelectMenuEnum;
-                    break;
-                case 1:
-                    rotate ^= 1;
-                    break;
-                case 2:
-                    bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
-                    menuNum = bonusMenuEnum;
-                    Menu = &bonusMenu;
-                    break;
-                case 3: 
-                        for (size_t i = 0; i < gridCount * gridCount; i++)
-                        {
-                            if(firstGameStageMenu.getGridData(0)[i] != 0)
-                            {
-                                firstGameStageMenu.setGridData(i, 0,0);
-                                firstGameStageMenu.markCell( i, "image/water.jpg",0);
-                            }
-                        }
-                        randomShipPlace(ships,firstGameStageMenu,true,0);
-                        startGameConditions = true;
-                    break;
-                case 4:
-                    if(startGameConditions == false)
-                    {
-                        startGameConditions = true;
-                        for(int i = 0; i < shipCount; i++)
-                        {
-                            if(tmpShips[i] > 0)
-                            {
-                                startGameConditions = false;
-                                break;
-                            }
-                        }
-                    }
-                    if(startGameConditions == true)
-                    {
-                        secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0),1);
-                        
-                        for (int i = 0; i < shipCount*shipCount;i++)
-                        {
-                            if(firstGameStageMenu.getGridData(0)[i] != 0)
-                            {   
-                                secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0),1);
-                                secondGameStageMenu.markCell( i,"image/water_.jpg",1);
-                            }
-                            if(secondGameStageMenu.getGridData(1)[i] != 0)
-                            {
-                                secondGameStageMenu.setGridData(i,0,1);
-                                secondGameStageMenu.markCell( i,"image/water.jpg",0);
-                            }
-                        }
-                        randomShipPlace(ships,secondGameStageMenu,true  ,0);
-                        secondGameStageMenu.setButtonText(0, "Radar " + toString(bonus[0]), 50, "font/consolaz.ttf");
-                        secondGameStageMenu.setButtonText(1, "Artillery " + toString(bonus[1]), 50, "font/consolaz.ttf");
-                        menuNum = secondGameStageMenuEnum;
-                        Menu = &secondGameStageMenu;
-                    }
-                    break;
-                case 5:
-                    Menu = &mainMenu;
-                    menuNum = mainMenuEnum;
-                    break;
-                default:
-                    break;
-                }
-                int tmp = firstGameStageMenu.getSelectedCell(window,0);
-                if (tmp >= 0 && canPlaceShip(ccurrentShipDeck, tmp, gridCount, rotate, firstGameStageMenu.getGridData(0)))
-                {
-                    bool isShipAmount = false;
-                    for (int i = 0; i < shipCount; i++)
-                    {
-                        if (tmpShips[i] == ccurrentShipDeck)
-                        {
-                            tmpShips[i] = -1;
-                            isShipAmount = true;
-                            break;
-                        }
-                    }
-                    if (isShipAmount)
-                        for (int i = 0; i < ccurrentShipDeck; i++)
-                        {
-                            if (rotate == 0)
-                            {
-                                firstGameStageMenu.markCell( tmp + i, "image/water_.jpg",0);
-                                firstGameStageMenu.setGridData(tmp + i, 1,0);
-                            }
-                            else
-                            {
-                                firstGameStageMenu.markCell( tmp + i * gridCount, "image/water_.jpg",0);
-                                firstGameStageMenu.setGridData(tmp + i * gridCount, 1,0);
-                            }
-                        }
-                }
-            }
-        }
-        else if (menuNum == shipSelectMenuEnum)
-        {
-            if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
-            {
-                menuNum = firstGameStageMenuEnum;
-                Menu = &firstGameStageMenu;
-            }
-            int buttonCount = shipSelectMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                ccurrentShipDeck = buttonCount + 1;
-                menuNum = firstGameStageMenuEnum;
-                Menu = &firstGameStageMenu;
-            }
-        } else if(menuNum == bonusMenuEnum)
-        {
-            int buttonCount = bonusMenu.getSelectedButton(window);
-            if (rightMouseStatus == 1)
-            {
-                rightMouseStatus = 0;
-                switch (buttonCount)
-                {
-                    case 0:
-                        // setCharString(currentUser.password, inputString, MAX_STRINGN);
-                        break;
-                    case 1:
-                        if(currentUser.money > RadarPrice && bonus[0] == 0)
-                        {
-                            bonus[0] = 1;
-                            currentUser.money -= RadarPrice;
-                            bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
-                        }    
-                        break;
-                    case 2:
-                        if(currentUser.money > artilleryPrice && bonus[1] == 0)
-                        {
-                            bonus[1] = 1;
-                            currentUser.money -= artilleryPrice;
-                            bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
-                        }   
-                        break;
-                    case 3:
-                        menuNum = firstGameStageMenuEnum;
-                        Menu = &firstGameStageMenu;
-                        break;
-                }
-            }
-        }else if(menuNum == secondGameStageMenuEnum)
-        {
-            int bonusNumberChoosed = -1;
-            int isMyStep = true;
-            std::stack<int> lastShipsCord;
-            while(!isEndGameConditions){
-                int buttonCount = secondGameStageMenu.getSelectedButton(window);
-                int selectedCell = secondGameStageMenu.getSelectedCell(window, 0);
-                if (rightMouseStatus == 1 && buttonCount >= 0)
-                {
-                    rightMouseStatus = 0;
-                    switch (buttonCount)
-                    {
-                    case 0:
-                        if(bonus[0] != 0)
-                        {
-                            bonusNumberChoosed = 0;
-                            secondGameStageMenu.setButtonText(3,"Radar",50,"font/consolaz.ttf");
-                        }
-                        break;
-                    case 1:
-                        if(bonus[1] != 0)
-                        {
-                            bonusNumberChoosed = 1;
-                            secondGameStageMenu.setButtonText(3,"Artillery",50,"font/consolaz.ttf");
-                        }
-                        break;
-                    case 2:
-                        currentUser.money = bonus[0] * RadarPrice + bonus[1] * RadarPrice;
-                        menuNum = mainMenuEnum;
-                        Menu = &mainMenu;
-                        isEndGameConditions = true;
-                        break;
-                    default:
-                        break;
-                    }
-                } else if (rightMouseStatus == 1 && isMyStep == true && selectedCell >= 0)
-                {
-                    if(bonusNumberChoosed >= 0 )
-                    {
-                        rightMouseStatus = 0;
-                        bonus[bonusNumberChoosed] = 0;
-                        RadarAbility(secondGameStageMenu,3,selectedCell,0);
-                    } else
-                    {
-                        rightMouseStatus = 0;
-                        waitForDraw = 1;
-                        if (!makeShoot(selectedCell, secondGameStageMenu, 0))
-                        {
-                            isMyStep = false;
-                            secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
-                            secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
-                        }
-                        if(!isShipAlive(secondGameStageMenu.getGridData(0),selectedCell))
-                        {   
-                            isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(0));
-                        }
-                        waitForDraw = 0;
-                    }
-                    
-                }
-                else
-                {
-                    rightMouseStatus = 0;
-                }
-                if (isMyStep == false)
-                {
-                    _sleep(300);
-                    int cord;
-                    if(lastShipsCord.size() > 0)
-                    {
-                        cord = lastShipsCord.top();
-                        lastShipsCord.pop();
-                    } else
-                    {
-                        int max = gridCount*gridCount;
-                        do
-                        {
-                            cord = rand() % max;
-                        }while(secondGameStageMenu.getGridData(1)[cord] == 2 ||secondGameStageMenu.getGridData(1)[cord] == 3);
-                    }
-                    std::cout << lastShipsCord.size() << " " << cord << std::endl;
-                    if(cord >= 0 && cord < secondGameStageMenu.getGridData(1).size() && secondGameStageMenu.getGridData(1)[cord] == 1)
-                        {
-                        if(cord + 1 < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord+1] == 0 || secondGameStageMenu.getGridData(1)[cord+1] ==  1))
-                            lastShipsCord.push(cord+1);
-                        if(cord - 1 >= 0 && (secondGameStageMenu.getGridData(1)[cord-1] == 0 || secondGameStageMenu.getGridData(1)[cord-1] == 1))
-                            lastShipsCord.push(cord - 1);
-                        if(cord + gridCount < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord+gridCount] == 0 || secondGameStageMenu.getGridData(1)[cord+gridCount] == 1))
-                            lastShipsCord.push(cord + gridCount);
-                        if(cord - gridCount >= 0 && (secondGameStageMenu.getGridData(1)[cord-gridCount] == 0 || secondGameStageMenu.getGridData(1)[cord-gridCount] == 1))
-                            lastShipsCord.push(cord - gridCount);
-                    }
-                    waitForDraw = 1;    
-                    if(!makeShoot(cord, secondGameStageMenu, 1))
-                    {
-                        if(!isShipAlive(secondGameStageMenu.getGridData(1),cord) && secondGameStageMenu.getGridData(1)[cord] == 3)
-                        {
-                            while (lastShipsCord.size() > 0)
-                            {
-                                lastShipsCord.pop();
-                            }           
-                            isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(1));
-                        }
-                        isMyStep = true;
-                        secondGameStageMenu.setButtonText(3, "You turn", 50, "font/consolaz.ttf");
-                        secondGameStageMenu.setButtonSprite(3, "image/green.jpg");
-                    }
-                    waitForDraw = 0;
-                }
-            }
-            secondGameStageMenu.setButtonText(3, "You kek", 50, "font/consolaz.ttf");
-            _sleep(4000);
-        }
+        _sleep(20);
     }
 }
 
@@ -789,6 +819,7 @@ void inputStream()
 {
     while (1)
     {
+        _sleep(20);
         while (stringSetNum >= 0)
         {
             if (event.type == sf::Event::KeyPressed)
@@ -820,12 +851,20 @@ int main()
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "info", 50, "font/consolaz.ttf");
     mainMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
     mainMenu.allignButton(window, 0);
+    mainMenu.setButtonOperations(mainStartButton,0);
+    mainMenu.setButtonOperations(mainRulesButton,1);
+    mainMenu.setButtonOperations(mainInfoButton,2);
+    mainMenu.setButtonOperations(mainQuitButton,3);
 
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Register", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Login", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "unauthorized", 50, "font/consolaz.ttf");
     startMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Quit", 50, "font/consolaz.ttf");
     startMenu.allignButton(window, 0);
+    startMenu.setButtonOperations(startRegisterButton,0);
+    startMenu.setButtonOperations(startLoginButton,1);
+    startMenu.setButtonOperations(startUnauthorizedButton,2);
+    startMenu.setButtonOperations(startQuitButton,3);
 
     firstGameStageMenu.createGrid(20, 20, 90, gridCount, gridCount, "image/water.jpg");
     firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "ships", 50, "font/consolaz.ttf");
@@ -835,36 +874,62 @@ int main()
     firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "start", 50, "font/consolaz.ttf");
     firstGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
     firstGameStageMenu.allignButton(window, 400);
+    firstGameStageMenu.setButtonOperations(firstGameStageShipsButton,0);
+    firstGameStageMenu.setButtonOperations(firstGameStageRotateButton,1);
+    firstGameStageMenu.setButtonOperations(firstGameStageBonusButton,2);
+    firstGameStageMenu.setButtonOperations(firstGameStageRandomButton,3);
+    firstGameStageMenu.setButtonOperations(firstGameStageStartButton,4);
+    firstGameStageMenu.setButtonOperations(firstGameStageBackButton,5);
+    firstGameStageMenu.setViewOperation(firstGameStageOperation);
 
     shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "one deck", 50, "font/consolaz.ttf");
     shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "two deck", 50, "font/consolaz.ttf");
     shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "three deck", 50, "font/consolaz.ttf");
     shipSelectMenu.addButton(0, 0, 500, 150, "image/button.jpg", "four deck", 50, "font/consolaz.ttf");
     shipSelectMenu.allignButton(window, 0);
+    shipSelectMenu.setViewOperation(shipSelectOperation);
+    shipSelectMenu.setButtonOperations(shipSelectOneButton,0);
+    shipSelectMenu.setButtonOperations(shipSelectTwoButton,1);
+    shipSelectMenu.setButtonOperations(shipSelectThreeButton,2);
+    shipSelectMenu.setButtonOperations(shipSelectFourButton,3);
 
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     infoMenu.allignButton(window, 0);
+    infoMenu.setViewOperation(infoViewOperation);
+
+    rulesMenu.setViewOperation(rulesViewOperation);
 
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "register", 50, "font/consolaz.ttf");
     registerMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
     registerMenu.allignButton(window, 0);
+    registerMenu.setButtonOperations(registerLoginFieldButton,0);
+    registerMenu.setButtonOperations(registerPasswordFiledButton,1);
+    registerMenu.setButtonOperations(registerRegisterButton,2);
+    registerMenu.setButtonOperations(registerBackButton,3);
 
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "login", 50, "font/consolaz.ttf");
     loginMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Back", 50, "font/consolaz.ttf");
     loginMenu.allignButton(window, 0);
+    loginMenu.setButtonOperations(loginLoginFieldButton,0);
+    loginMenu.setButtonOperations(loginPasswordFieldButton,1);
+    loginMenu.setButtonOperations(loginLoginButton,2);
+    loginMenu.setButtonOperations(loginBackButton,3);
 
     bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "", 50, "font/consolaz.ttf");
     bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Radar", 50, "font/consolaz.ttf");
     bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "Artillery", 50, "font/consolaz.ttf");
     bonusMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
     bonusMenu.allignButton(window,0);
+    bonusMenu.setButtonOperations(bonusRadarButton,1);
+    bonusMenu.setButtonOperations(bonusArtilleryButton,2);
+    bonusMenu.setButtonOperations(bonusBackButton,3);
 
     secondGameStageMenu.createGrid(20, 20, 90, gridCount, gridCount, "image/water.jpg");
     secondGameStageMenu.createGrid(1600, 20, 30, gridCount, gridCount, "image/water.jpg");
@@ -873,6 +938,10 @@ int main()
     secondGameStageMenu.addButton(0, 0, 500, 150, "image/button.jpg", "back", 50, "font/consolaz.ttf");
     secondGameStageMenu.addButton(0, 0, 300, 100, "image/green.jpg", "You turn", 50, "font/consolaz.ttf");
     secondGameStageMenu.allignButton(window, 300);
+    secondGameStageMenu.setButtonOperations(secondGameStageRadarButton,0);
+    secondGameStageMenu.setButtonOperations(secondGameStageArtilleryButton,1);
+    secondGameStageMenu.setButtonOperations(secondGameStageBackButton,2);
+    secondGameStageMenu.setViewOperation(secondGameStageOperation);
 
     window.setFramerateLimit(90);
     while (window.isOpen())
@@ -898,9 +967,9 @@ int main()
         case 4:
             break;
         default:
-            break;  
+            break;
         }
-        while (window.pollEvent(event))  
+        while (window.pollEvent(event))
         {
             if (event.type == sf::Event::Closed)
                 window.close();
@@ -919,26 +988,6 @@ int main()
         {
             window.clear();
             Menu->draw(window);
-            // if (menuNum == mainMenuEnum)
-            //     mainMenu.draw(window);
-            // if (menuNum == startMenuEnum)
-            //     startMenu.draw(window);
-            // if (menuNum == registerMenuEnum)
-            //     registerMenu.draw(window);
-            // if (menuNum == loginMenuEnum)
-            //     loginMenu.draw(window);
-            // if (menuNum == rulesMenuEnum)
-            //     rulesMenu.draw(window);
-            // if (menuNum == infoMenuEnum)
-            //     infoMenu.draw(window);
-            // if (menuNum == firstGameStageMenuEnum)
-            //     firstGameStageMenu.draw(window);
-            // if (menuNum == shipSelectMenuEnum)
-            //     shipSelectMenu.draw(window);
-            // if (menuNum == bonusMenuEnum)
-            //     bonusMenu.draw(window);
-            // if (menuNum == secondGameStageMenuEnum)
-            //     secondGameStageMenu.draw(window);
             window.display();
         }
     }

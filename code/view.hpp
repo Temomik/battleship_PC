@@ -15,14 +15,18 @@ private:
     std::vector<Button> buttons;
     std::vector<Grid> grids;
     void (*operations[MaxButtonFunctions])() ;
+    void (*viewOperation)();
     // Grid grid, enemyGrid;
-
 public:
     View(std::string backgroundName);
     ~View();
     void addButton(size_t x, size_t y, size_t width, size_t height, std::string fileName, std::string text, size_t fontSize, std::string font);
     void createGrid(int x, int y, int size, int width, int height, std::string filename);
+    void setViewOperation(void (*operation)());
+    void doViewOperation();
     // void createEnemyGrid(int x, int y, int size, int width, int height, std::string filename);
+    void doOperations(int num);
+    void setButtonOperations(void (*operations)(),int num);
     void draw(sf::RenderWindow &window);
     int getSelectedButton(sf::RenderWindow &window);
     void allignButton(sf::RenderWindow &window, int shift);
@@ -36,6 +40,31 @@ public:
     void setGridData(std::vector<int>& data,int gridNum);
     void setButtonText(size_t numb, std::string text, size_t size, std::string font);
 };
+
+void View::setButtonOperations(void (*operation)(),int num)
+{
+    if(num < MaxButtonFunctions)
+    {
+        this->operations[num] = operation;
+    }
+}
+
+void View::doOperations(int num)
+{
+    if(num < MaxButtonFunctions && this->operations[num] != NULL)
+        this->operations[num]();
+}
+
+void View::setViewOperation(void (*operation)())
+{
+    this->viewOperation = operation;
+}
+
+void View::doViewOperation()
+{
+    if(this->viewOperation != NULL)
+        this->viewOperation();
+}
 
 View::View(std::string backgroundName)
 {
