@@ -23,20 +23,7 @@ int waitForDraw = 0;
 int startGameConditions = 0;
 int rotate = 0;
 int currentShipDeck = 0;
-
-// enum menuNames
-// {
-//     loginMenuEnum,
-//     registerMenuEnum,
-//     mainMenuEnum,
-//     infoMenuEnum,
-//     rulesMenuEnum,
-//     firstGameStageMenuEnum,
-//     secondGameStageMenuEnum,
-//     shipSelectMenuEnum,
-//     startMenuEnum,
-//     bonusMenuEnum
-// };
+bool isEndGameConditions = false;
 
 int toAnsi(int code)
 {
@@ -309,7 +296,7 @@ int middleMouseStatus = 0;
 Profiles profiles("saves");
 Profile currentUser = {"", "", 0, 0};
 
-void RadarAbility(View& view, int size, int cord, int gridNum)
+void doBonus(View& view, int size, int cord, int gridNum,int bonusNum)
 {
     size--;
     for ( int i = -gridCount; i < size  * gridCount; i+=gridCount)
@@ -318,9 +305,14 @@ void RadarAbility(View& view, int size, int cord, int gridNum)
         {
             if(cord+i+j >= 0 && cord+i+j < view.getGridData(gridNum).size())
             {
-                if( view.getGridData(gridNum)[cord+i+j] == 1)
+                if( view.getGridData(gridNum)[cord+i+j] == 1 && bonusNum == 0)
                 {
                     secondGameStageMenu.markCell(cord+i+j, "image/water_.jpg",gridNum);
+                }
+                
+                if( view.getGridData(gridNum)[cord+i+j] == 1 && bonusNum == 1)
+                {
+                    makeShoot(cord+i+j,secondGameStageMenu,0);
                 }
             }
         }
@@ -489,34 +481,42 @@ void firstGameStageStartButton()
 {
     int tmpShips[shipCount];
     cloneArray(tmpShips,ships,shipCount);
-    if (startGameConditions == false)
-    {
-        startGameConditions = true;
-        for (int i = 0; i < shipCount; i++)
-        {
-            if (tmpShips[i] > 0)
-            {
-                startGameConditions = false;
-                break;
-            }
-        }
-    }
+    // if (startGameConditions == false)
+    // {
+    //     startGameConditions = true;
+    //     for (int i = 0; i < shipCount; i++)
+    //     {
+    //         if (tmpShips[i] > 0)
+    //         {
+    //             startGameConditions = false;
+    //             break;
+    //         }
+    //     }
+    // }
     if (startGameConditions == true)
     {
         secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0), 1);
-
-        for (int i = 0; i < shipCount * shipCount; i++)
+        isEndGameConditions = false;
+        for (int i = 0; i < gridCount*gridCount; i++)
         {
             if (firstGameStageMenu.getGridData(0)[i] != 0)
             {
-                secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0), 1);
+                // secondGameStageMenu.setGridData(firstGameStageMenu.getGridData(0), 1);
                 secondGameStageMenu.markCell(i, "image/water_.jpg", 1);
-            }
-            if (secondGameStageMenu.getGridData(1)[i] != 0)
+            } else 
             {
-                secondGameStageMenu.setGridData(i, 0, 1);
+                secondGameStageMenu.markCell(i, "image/water.jpg", 1);
+            }
+            if (secondGameStageMenu.getGridData(0)[i] != 0)
+            {
+                secondGameStageMenu.setGridData(i,0,0);
                 secondGameStageMenu.markCell(i, "image/water.jpg", 0);
             }
+            // if (secondGameStageMenu.getGridData(1)[i] != 0)
+            // {
+            //     secondGameStageMenu.setGridData(i, 0, 1);
+            //     secondGameStageMenu.markCell(i, "image/water.jpg", 1);
+            // }
         }
         randomShipPlace(ships, secondGameStageMenu, false, 0);
         secondGameStageMenu.setButtonText(0, "Radar " + toString(bonus[0]), 50, "font/consolaz.ttf");
@@ -531,6 +531,11 @@ void firstGameStageBackButton()
 
 void firstGameStageOperation()
 {
+    
+    if(startGameConditions == true)
+    {
+        return; 
+    }
     startGameConditions = true;
     for (size_t i = 0; i < shipCount; i++)
     {
@@ -542,7 +547,7 @@ void firstGameStageOperation()
     }
     if(startGameConditions == true)
     {
-        return;
+        return; 
     }
     
     int buttonCount = firstGameStageMenu.getSelectedButton(window);
@@ -656,13 +661,12 @@ void bonusBackButton()
 
 int bonusNumberChoosed = -1;
 int isMyStep = true;
-bool isEndGameConditions = false;
 
 void secondGameStageRadarButton()
 {
     if (bonus[0] != 0)
     {
-        bonus[0] = 0;
+        // bonus[0] = 0;
         bonusNumberChoosed = 0;
         secondGameStageMenu.setButtonText(3, "Radar", 50, "font/consolaz.ttf");
         secondGameStageMenu.setButtonText(0, "Radar 0", 50, "font/consolaz.ttf");
@@ -674,13 +678,14 @@ void secondGameStageArtilleryButton()
     if (bonus[1] != 0)
     {
         bonusNumberChoosed = 1;
+        secondGameStageMenu.setButtonText(1 , "Artillery 0", 50, "font/consolaz.ttf");
         secondGameStageMenu.setButtonText(3, "Artillery", 50, "font/consolaz.ttf");
     }
 }
 
 void secondGameStageBackButton()
 {
-    currentUser.money = bonus[0] * RadarPrice + bonus[1] * RadarPrice;
+    currentUser.money += bonus[0] * RadarPrice + bonus[1] * RadarPrice;
     Menu = &mainMenu;
     isEndGameConditions = true;
 }
@@ -697,7 +702,7 @@ void secondGameStageOperation()
             {
                 rightMouseStatus = 0;
                 bonus[bonusNumberChoosed] = 0;
-                RadarAbility(secondGameStageMenu, 3, selectedCell, 0);
+                doBonus(secondGameStageMenu, 3, selectedCell, 0,bonusNumberChoosed);
                 bonusNumberChoosed = -1;
                 secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
                 secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
