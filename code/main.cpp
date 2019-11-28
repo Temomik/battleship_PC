@@ -9,6 +9,9 @@
 #include <math.h>
 
 #define DELETE 59
+#define ENEMY_GRID_VISION true
+
+const int victoryGiftMoney = 1000;
 
 int stringSetNum = -1;
 int menuStringSet = -1;
@@ -48,7 +51,7 @@ std::string toString(int num)
 
 bool isEndOfGame(std::vector<int>& data)
 {
-    bool isEndGameConditions;
+    bool isEndGameConditions = true;
     int count = gridCount * gridCount;
     for (size_t i = 0; i < count; i++)
     {
@@ -57,7 +60,6 @@ bool isEndOfGame(std::vector<int>& data)
             isEndGameConditions = false;
             break;
         }
-        isEndGameConditions = true;
     }
     return isEndGameConditions;
 }
@@ -290,8 +292,8 @@ View mainMenu("image/background.jpg");
 View bonusMenu("image/background.jpg");
 View *Menu = &startMenu;
 sf::RenderWindow window(sf::VideoMode(1920, 1080), "BattleShip", sf::Style::Fullscreen);
-int rightMouseStatus = 0;
 int leftMouseStatus = 0;
+int rightMouseStatus = 0;
 int middleMouseStatus = 0;
 Profiles profiles("saves");
 Profile currentUser = {"", "", 0, 0};
@@ -518,7 +520,7 @@ void firstGameStageStartButton()
             //     secondGameStageMenu.markCell(i, "image/water.jpg", 1);
             // }
         }
-        randomShipPlace(ships, secondGameStageMenu, false, 0);
+        randomShipPlace(ships, secondGameStageMenu, ENEMY_GRID_VISION, 0);
         secondGameStageMenu.setButtonText(0, "Radar " + toString(bonus[0]), 50, "font/consolaz.ttf");
         secondGameStageMenu.setButtonText(1, "Artillery " + toString(bonus[1]), 50, "font/consolaz.ttf");
         Menu = &secondGameStageMenu;
@@ -551,9 +553,9 @@ void firstGameStageOperation()
     }
     
     int buttonCount = firstGameStageMenu.getSelectedButton(window);
-    if (rightMouseStatus == 1)
+    if (leftMouseStatus == 1)
     {
-        rightMouseStatus = 0;
+        leftMouseStatus = 0;
         switch (buttonCount)
         {
 
@@ -623,9 +625,9 @@ void shipSelectOperation()
         Menu = &firstGameStageMenu;
     }
     // int buttonCount = shipSelectMenu.getSelectedButton(window);
-    // if (rightMouseStatus == 1)
+    // if (leftMouseStatus == 1)
     // {
-    //     rightMouseStatus = 0;
+    //     leftMouseStatus = 0;
     //     currentShipDeck =  buttonCount + 1;
     //     Menu = &firstGameStageMenu;
     // }
@@ -690,17 +692,18 @@ void secondGameStageBackButton()
     isEndGameConditions = true;
 }
 
+bool isBotWin = false;
 void secondGameStageOperation()
 {
     static std::stack<int> lastShipsCord;
     if (!isEndGameConditions)
     {
         int selectedCell = secondGameStageMenu.getSelectedCell(window, 0);
-        if (rightMouseStatus == 1 && isMyStep == true && selectedCell >= 0)
+        if (leftMouseStatus == 1 && isMyStep == true && selectedCell >= 0)
         {
             if (bonusNumberChoosed >= 0)
             {
-                rightMouseStatus = 0;
+                leftMouseStatus = 0;
                 bonus[bonusNumberChoosed] = 0;
                 doBonus(secondGameStageMenu, 3, selectedCell, 0,bonusNumberChoosed);
                 bonusNumberChoosed = -1;
@@ -710,7 +713,7 @@ void secondGameStageOperation()
             }
             else
             {
-                rightMouseStatus = 0;
+                leftMouseStatus = 0;
                 waitForDraw = 1;
                 if (!makeShoot(selectedCell, secondGameStageMenu, 0))
                 {
@@ -719,7 +722,7 @@ void secondGameStageOperation()
                     secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
                     secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
                 }
-                if (!isShipAlive(secondGameStageMenu.getGridData(0), selectedCell))
+                if (isShipAlive(secondGameStageMenu.getGridData(0), selectedCell))
                 {
                     std::cout << "kill Ship" << std::endl;
                     isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(0));
@@ -729,7 +732,7 @@ void secondGameStageOperation()
         }
         else
         {
-            rightMouseStatus = 0;
+            leftMouseStatus = 0;
         }
         if (isMyStep == false)
         {
@@ -762,24 +765,43 @@ void secondGameStageOperation()
             }
             if (!makeShoot(cord, secondGameStageMenu, 1))
             {
-                if (!isShipAlive(secondGameStageMenu.getGridData(1), cord) && secondGameStageMenu.getGridData(1)[cord] == 3)
+                isMyStep = true;
+                secondGameStageMenu.setButtonText(3, "You turn", 50, "font/consolaz.ttf");
+                secondGameStageMenu.setButtonSprite(3, "image/green.jpg");
+            } else
+            {
+                if (isShipAlive(secondGameStageMenu.getGridData(1), cord) )
                 {
+                    std::cout << "bot kill ship" << std::endl;
                     while (lastShipsCord.size() > 0)
                     {
                         lastShipsCord.pop();
                     }
                     isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(1));
+                    if(isEndGameConditions)
+                        isBotWin == true;
                 }
-                isMyStep = true;
-                secondGameStageMenu.setButtonText(3, "You turn", 50, "font/consolaz.ttf");
-                secondGameStageMenu.setButtonSprite(3, "image/green.jpg");
             }
+            
+
         }
     } else
     {
+        leftMouseStatus = 0;
         std::cout << "end Game" << std::endl;
-        secondGameStageMenu.setButtonText(3, "You kek", 50, "font/consolaz.ttf");
-        _sleep(4000);
+        if(isBotWin)
+            secondGameStageMenu.setButtonText(3, "You loose", 50, "font/consolaz.ttf");
+        else
+        {
+            secondGameStageMenu.setButtonText(3, "You win", 50, "font/consolaz.ttf");
+        }
+        
+        if (sf::Keyboard::isKeyPressed(sf::Keyboard::Escape))
+        {
+            if(!isBotWin)
+                currentUser.money += victoryGiftMoney;
+            Menu = &mainMenu;
+        }
     }
 }
 
@@ -807,14 +829,14 @@ void logicThread()
     {
 
         int buttonNum = Menu->getSelectedButton(window);
-        if (rightMouseStatus == 1 && buttonNum >= 0)
+        if (leftMouseStatus == 1 && buttonNum >= 0)
         {
-            rightMouseStatus = 0;
+            leftMouseStatus = 0;
             Menu->doOperations(buttonNum);
         } else
         {
             Menu->doViewOperation();
-            rightMouseStatus = 0;
+            leftMouseStatus = 0;
         }
         _sleep(20);
     }
@@ -980,13 +1002,13 @@ int main()
                 window.close();
             if (event.type == sf::Event::MouseButtonPressed)
                 if (event.mouseButton.button == sf::Mouse::Left)
-                    rightMouseStatus = 1;
-            if (event.type == sf::Event::MouseButtonPressed)
-                if (event.mouseButton.button == sf::Mouse::Right)
                     leftMouseStatus = 1;
             if (event.type == sf::Event::MouseButtonPressed)
+                if (event.mouseButton.button == sf::Mouse::Right)
+                    rightMouseStatus = 1;
+            if (event.type == sf::Event::MouseButtonPressed)
                 if (event.mouseButton.button == sf::Mouse::Middle)
-            middleMouseStatus = 1;
+                    middleMouseStatus = 1;
         }
 
         if (waitForDraw == 0)
