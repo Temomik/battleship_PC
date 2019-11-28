@@ -27,6 +27,7 @@ int startGameConditions = 0;
 int rotate = 0;
 int currentShipDeck = 0;
 bool isEndGameConditions = false;
+int bonusNumberChoosed = -1;
 
 int toAnsi(int code)
 {
@@ -312,7 +313,7 @@ void doBonus(View& view, int size, int cord, int gridNum,int bonusNum)
                     secondGameStageMenu.markCell(cord+i+j, "image/water_.jpg",gridNum);
                 }
                 
-                if( view.getGridData(gridNum)[cord+i+j] == 1 && bonusNum == 1)
+                if(bonusNum == 1)
                 {
                     makeShoot(cord+i+j,secondGameStageMenu,0);
                 }
@@ -333,7 +334,9 @@ void mainStartButton()
             firstGameStageMenu.markCell(i, "image/water.jpg",0);
         }
     }
+    cloneArray(handleButtonShipArray,ships,shipCount);
     cloneArray(tmpShips,ships,shipCount);
+    currentShipDeck = -1;
     Menu  = &firstGameStageMenu;
 }
 
@@ -533,7 +536,6 @@ void firstGameStageBackButton()
 
 void firstGameStageOperation()
 {
-    
     if(startGameConditions == true)
     {
         return; 
@@ -556,13 +558,6 @@ void firstGameStageOperation()
     if (leftMouseStatus == 1)
     {
         leftMouseStatus = 0;
-        switch (buttonCount)
-        {
-
-            break;
-        default:
-            break;
-        }
         int tmp = firstGameStageMenu.getSelectedCell(window, 0);
         if (tmp >= 0 && canPlaceShip(currentShipDeck, tmp, gridCount, rotate, firstGameStageMenu.getGridData(0)))
         {
@@ -640,6 +635,7 @@ void bonusRadarButton()
     if (currentUser.money > RadarPrice && bonus[0] == 0)
     {
         bonus[0] = 1;
+        bonusNumberChoosed = 0;
         currentUser.money -= RadarPrice;
         bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
     }
@@ -650,6 +646,7 @@ void bonusArtilleryButton()
     if (currentUser.money > artilleryPrice && bonus[1] == 0)
     {
         bonus[1] = 1;
+        bonusNumberChoosed = 1;
         currentUser.money -= artilleryPrice;
         bonusMenu.setButtonText(0, toString(currentUser.money), 50, "font/consolaz.ttf");
     }
@@ -661,7 +658,6 @@ void bonusBackButton()
     Menu = &firstGameStageMenu;
 }
 
-int bonusNumberChoosed = -1;
 int isMyStep = true;
 
 void secondGameStageRadarButton()
@@ -717,14 +713,14 @@ void secondGameStageOperation()
                 waitForDraw = 1;
                 if (!makeShoot(selectedCell, secondGameStageMenu, 0))
                 {
-                    std::cout << "makeshoot" << std::endl;
+                    // std::cout << "makeshoot" << std::endl;
                     isMyStep = false;
                     secondGameStageMenu.setButtonText(3, "Bot turn", 50, "font/consolaz.ttf");
                     secondGameStageMenu.setButtonSprite(3, "image/red.jpg");
                 }
                 if (isShipAlive(secondGameStageMenu.getGridData(0), selectedCell))
                 {
-                    std::cout << "kill Ship" << std::endl;
+                    // std::cout << "kill Ship" << std::endl;
                     isEndGameConditions = isEndOfGame(secondGameStageMenu.getGridData(0));
                 }
                 waitForDraw = 0;
@@ -751,7 +747,7 @@ void secondGameStageOperation()
                     cord = rand() % max;
                 } while (secondGameStageMenu.getGridData(1)[cord] == 2 || secondGameStageMenu.getGridData(1)[cord] == 3);
             }
-            std::cout << lastShipsCord.size() << " " << cord << std::endl;
+            // std::cout << lastShipsCord.size() << " " << cord << std::endl;
             if (cord >= 0 && cord < secondGameStageMenu.getGridData(1).size() && secondGameStageMenu.getGridData(1)[cord] == 1)
             {
                 if (cord + 1 < secondGameStageMenu.getGridData(1).size() && (secondGameStageMenu.getGridData(1)[cord + 1] == 0 || secondGameStageMenu.getGridData(1)[cord + 1] == 1))
@@ -772,7 +768,7 @@ void secondGameStageOperation()
             {
                 if (!   isShipAlive(secondGameStageMenu.getGridData(1), cord) )
                 {
-                    std::cout << "bot kill ship" << std::endl;
+                    // std::cout << "bot kill ship" << std::endl;
                     while (lastShipsCord.size() > 0)
                     {
                         lastShipsCord.pop();
@@ -788,7 +784,7 @@ void secondGameStageOperation()
     } else
     {
         leftMouseStatus = 0;
-        std::cout << "end Game" << std::endl;
+        // std::cout << "end Game" << std::endl;
         if(isBotWin)
             secondGameStageMenu.setButtonText(3, "You loose", 50, "font/consolaz.ttf");
         else
@@ -1024,7 +1020,7 @@ int main()
     logic.terminate();
     logic.wait();
     profiles.update(currentUser);
-    std::cout << "kek";
+    // std::cout << "kek";
     profiles.write("saves");
     return 0;
 }
