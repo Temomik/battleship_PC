@@ -71,7 +71,7 @@
 
 <a name="6"></a>
 ## 6. Представление результатов
-Результаты тестирования представлены в [документе](https://github.com/BoryaD/PacMan/blob/master/Testing/Test%20results.md).
+Результаты тестирования представлены в [документе](https://github.com/Temomik/battleship_PC/blob/master/Testing/test%20result.md).
 
 <a name="7"></a>
 ## 7. Вывод
