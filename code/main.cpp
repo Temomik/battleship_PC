@@ -9,7 +9,7 @@
 #include <math.h>
 
 #define DELETE 59
-#define ENEMY_GRID_VISION true
+#define ENEMY_GRID_VISION false
 
 const int victoryGiftMoney = 1000;
 
@@ -770,7 +770,7 @@ void secondGameStageOperation()
                 secondGameStageMenu.setButtonSprite(3, "image/green.jpg");
             } else
             {
-                if (isShipAlive(secondGameStageMenu.getGridData(1), cord) )
+                if (!   isShipAlive(secondGameStageMenu.getGridData(1), cord) )
                 {
                     std::cout << "bot kill ship" << std::endl;
                     while (lastShipsCord.size() > 0)
